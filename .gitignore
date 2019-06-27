@@ -1,0 +1,83 @@
+# OSX
+#
+.DS_Store
+
+# Xcode
+#
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+*.xccheckout
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+project.xcworkspace
+
+# Android/IntelliJ
+#
+build/
+.idea
+.gradle
+local.properties
+*.iml
+
+# node.js
+#
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# BUCK
+buck-out/
+\.buckd/
+android/app/libs
+*.keystore
+
+# fastlane
+#
+# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
+# screenshots whenever they are needed.
+# For more information about the recommended setup visit:
+# https://github.com/fastlane/fastlane/blob/master/fastlane/docs/Gitignore.md
+
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+
+android/app/libs
+android/keystores/debug.keystore
+
+logs
+photoshop
+android/bluenet
+android/localization
+app-logs
+
+# ignore all js files since they are compiled
+*.js
+!js/router/RouterAndroid.js
+!js/router/RouterIOS.js
+!index.js
+!vis.js
+!./App.js
+!sentrySettings.template.js
+!testRouterEquality.js
+!__tests__/**
+!**.tapetest.js
+
+sentrySettings.js
+sentry.properties
+LocalConfig.ts
+toonConfig.ts
+
+!scripts/**
+__prototypes

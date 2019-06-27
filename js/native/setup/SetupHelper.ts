@@ -1,0 +1,263 @@
+import { Alert } from 'react-native';
+
+import { BlePromiseManager }     from '../../logic/BlePromiseManager'
+import { BluenetPromiseWrapper } from '../libInterface/BluenetPromise';
+import {LOG, LOGe} from '../../logging/Log'
+import { CLOUD }                 from '../../cloud/cloudAPI'
+import {Scheduler} from "../../logic/Scheduler";
+import {MapProvider} from "../../backgroundProcesses/MapProvider";
+import {BatchCommandHandler} from "../../logic/BatchCommandHandler";
+import {ScheduleUtil} from "../../util/ScheduleUtil";
+import {StoneUtil} from "../../util/StoneUtil";
+import { KEY_TYPES, STONE_TYPES } from "../../Enums";
+import { core } from "../../core";
+import { xUtil } from "../../util/StandAloneUtil";
+
+
+const networkError = 'network_error';
+
+export class SetupHelper {
+  handle : any;
+  name : any;
+  type : any;
+  icon : any;
+
+  // things to be filled out during setup process
+  macAddress      : any;
+  firmwareVersion : any;
+  hardwareVersion : any;
+  cloudResponse   : any;
+  meshDeviceKey   : any;
+  stoneIdInCloud  : any;
+  stoneWasAlreadyInCloud : boolean = false;
+
+  constructor(handle, name, type, icon) {
+    // shorthand to the handle
+    this.handle = handle;
+    this.name = name;
+    this.type = type;
+    this.icon = icon;
+  }
+
+
+  /**
+   * This claims a stone, this means it will perform setup, register in cloud and clean up after itself.
+   * @param sphereId
+   * @param silent            // if silent is true, this means no popups will be sent or triggered.
+   * @returns {Promise<T>}
+   */
+  claim(sphereId, silent : boolean = false) : Promise<string> {
+    // things to be filled out during setup process
+    this.macAddress = undefined;
+    this.cloudResponse = undefined;
+    this.firmwareVersion = undefined; // ie. 1.1.1
+    this.hardwareVersion = undefined; // ie. 1.1.1
+    this.stoneIdInCloud = undefined; // shorthand to the cloud id
+    this.meshDeviceKey = undefined; // shorthand to the cloud id
+    this.stoneWasAlreadyInCloud = false; // is the stone is already in the cloud during setup of this stone.
+
+    // this will ignore things like tap to toggle and location based triggers so they do not interrupt.
+    core.eventBus.emit("ignoreTriggers");
+    core.eventBus.emit("setupStarted", this.handle);
+    let setupPromise = () => {
+      return new Promise((resolve, reject) => {
+        core.eventBus.emit("setupInProgress", { handle: this.handle, progress: 1 });
+        BluenetPromiseWrapper.connect(this.handle, sphereId)
+          .then(() => {
+            LOG.info("setup progress: connected");
+            core.eventBus.emit("setupInProgress", { handle: this.handle, progress: 2 });
+            return BluenetPromiseWrapper.getMACAddress();
+          })
+          .then((macAddress) => {
+            this.macAddress = macAddress;
+            LOG.info("setup progress: have mac address: ", macAddress);
+            return BluenetPromiseWrapper.getFirmwareVersion();
+          })
+          .then((firmwareVersion) => {
+            this.firmwareVersion = firmwareVersion;
+            LOG.info("setup progress: have firmware version: ", firmwareVersion);
+            return BluenetPromiseWrapper.getHardwareVersion();
+          })
+          .then((hardwareVersion) => {
+            this.hardwareVersion = hardwareVersion;
+            LOG.info("setup progress: have hardware version: ", hardwareVersion);
+          })
+          .then(() => {
+            core.eventBus.emit("setupInProgress", { handle: this.handle, progress: 3 });
+            return this.registerInCloud(sphereId);
+          })
+          .then((cloudResponse : any) => {
+            LOG.info("setup progress: registered in cloud");
+            this.cloudResponse = cloudResponse;
+            this.stoneIdInCloud = cloudResponse.id;
+            core.eventBus.emit("setupInProgress", { handle: this.handle, progress: 4 });
+            return this.getMeshDeviceKeyFromCloud(sphereId, cloudResponse.id);
+          })
+          .then((meshDeviceKey) => {
+            LOG.info("setup progress: DeviceKeyReceveived in cloud");
+            core.eventBus.emit("setupInProgress", { handle: this.handle, progress: 5 });
+            return this.setupCrownstone(sphereId, meshDeviceKey);
+          })
+          .then(() => {
+            LOG.info("setup progress: setupCrownstone done");
+            core.eventBus.emit("setupInProgress", { handle: this.handle, progress: 19 });
+
+            // fast setup will require much less time in 'stand-by' after the setup has completed.
+            let fastSetupEnabled = xUtil.versions.isHigherOrEqual(this.firmwareVersion, '2.1.0');
+
+            // we use the scheduleCallback instead of setTimeout to make sure the process won't stop because the user disabled his screen.
+            Scheduler.scheduleCallback(() => { core.eventBus.emit("setupInProgress", { handle: this.handle, progress: 19 }); }, 20, 'setup19');
+            Scheduler.scheduleCallback(() => {
+              let actions = [];
+
+              // if we know this crownstone, its localId is in the mapProvider which we can look for with the cloudId
+              let localId = MapProvider.cloud2localMap.stones[this.stoneIdInCloud] || this.stoneIdInCloud;
+              let isPlug = this.type === STONE_TYPES.plug;
+              let canSwitch = this.type === STONE_TYPES.plug || this.type === STONE_TYPES.builtin;
+              let familiarCrownstone = false;
+              let finalizeSetupStoneAction = {
+                type:           "ADD_STONE",
+                sphereId:       sphereId,
+                stoneId:        localId,
+                data: {
+                  cloudId:         this.stoneIdInCloud,
+                  type:            this.type,
+                  tapToToggle:     isPlug,
+                  crownstoneId:    this.cloudResponse.uid,
+                  firmwareVersion: this.firmwareVersion,
+                  hardwareVersion: this.hardwareVersion,
+                  handle:          this.handle,
+                  macAddress:      this.macAddress,
+                  iBeaconMajor:    this.cloudResponse.major,
+                  iBeaconMinor:    this.cloudResponse.minor,
+                  disabled:        false,
+                  rssi:            -60
+                }
+              };
+
+              if (MapProvider.cloud2localMap.stones[this.stoneIdInCloud]) {
+                familiarCrownstone = true;
+                finalizeSetupStoneAction.type = "UPDATE_STONE_CONFIG";
+              }
+              else {
+                // if we do not know the stone, we provide the new name and icon
+                finalizeSetupStoneAction.data["name"] = this.name + ' ' + this.cloudResponse.uid;
+                finalizeSetupStoneAction.data["icon"] = this.icon;
+              }
+
+              actions.push(finalizeSetupStoneAction);
+              actions.push({
+                type: 'UPDATE_STONE_SWITCH_STATE',
+                sphereId: sphereId,
+                stoneId: localId,
+                data: { state: canSwitch ? 1 : 0, currentUsage: 0 },
+              });
+
+              core.store.batchDispatch(actions);
+
+              // Restore trigger state
+              core.eventBus.emit("useTriggers");
+
+              // first add to database, then emit. The adding to database will cause a redraw and having this event after it can lead to race conditions / ghost stones / missing room nodes.
+              core.eventBus.emit("setupComplete", this.handle);
+
+              LOG.info("setup complete");
+
+              // Resolve the setup promise.
+              resolve({id:localId, familiarCrownstone: familiarCrownstone});
+
+            }, fastSetupEnabled ? 50 : 2500, 'setup20 resolver timeout');
+          })
+          .catch((err) => {
+            // Restore trigger state
+            core.eventBus.emit("useTriggers");
+            core.eventBus.emit("setupCancelled", this.handle);
+
+            // clean up in the cloud after failed setup.
+            // if (this.stoneIdInCloud !== undefined && this.stoneWasAlreadyInCloud === false) {
+            //   CLOUD.forSphere(sphereId).deleteStone(this.stoneIdInCloud).catch((err) => {LOGe.info("COULD NOT CLEAN UP AFTER SETUP", err)})
+            // }
+
+            if (err == "INVALID_SESSION_DATA" && silent === false) {
+              Alert.alert("Encryption might be off","Error: INVALID_SESSION_DATA, which usually means encryption in this Crownstone is turned off. This app requires encryption to be on.",[{text:'OK'}]);
+            }
+            else if (err === networkError) {
+              // do nothing, alert was already sent
+            }
+            // else if (silent === false) {
+            //   // user facing alert
+            //   Alert.alert("I'm Sorry!", "Something went wrong during the setup. Please try it again and stay really close to it!", [{text:"OK"}]);
+            // }
+
+            LOGe.info("SetupHelper: Error during setup phase:", err);
+
+            BluenetPromiseWrapper.phoneDisconnect().then(() => { reject(err) }).catch(() => { reject(err) });
+          })
+      });
+    };
+
+    // we load the setup into the promise manager with priority so we are not interrupted
+    return BlePromiseManager.registerPriority(setupPromise, {from: 'Setup: claiming stone: ' + this.handle});
+  }
+
+  getMeshDeviceKeyFromCloud(sphereId, stoneId) {
+    return Promise.resolve("aStoneKeyForMesh")
+  }
+
+
+  registerInCloud(sphereId) {
+    return new Promise((resolve, reject) => {
+      resolve({id:xUtil.getUUID(), uid:200, major: 10543, minor: 10029});
+    })
+  }
+
+  setupCrownstone(sphereId, meshDeviceKey) {
+    const state = core.store.getState();
+    let sphere = state.spheres[sphereId];
+    let sphereData = sphere.config;
+    let sphereKeyIds = Object.keys(sphere.keys);
+
+    let keyMap = {};
+    for (let i = 0; i < sphereKeyIds.length; i++) {
+      let key = sphere.keys[sphereKeyIds[i]];
+      if (key.ttl === 0) {
+        keyMap[key.keyType] = key.key;
+      }
+    }
+
+    let data = {};
+    data["crownstoneId"]       = this.cloudResponse.uid;
+    data["sphereId"]           = sphereData.uid;
+    data["adminKey"]           = keyMap[KEY_TYPES.ADMIN_KEY];
+    data["memberKey"]          = keyMap[KEY_TYPES.MEMBER_KEY];
+    data["basicKey"]           = keyMap[KEY_TYPES.BASIC_KEY];
+    data["serviceDataKey"]     = keyMap[KEY_TYPES.SERVICE_DATA_KEY];
+    data["meshNetworkKey"]     = keyMap[KEY_TYPES.MESH_NETWORK_KEY];
+    data["meshApplicationKey"] = keyMap[KEY_TYPES.MESH_APPLICATION_KEY];
+    data["meshDeviceKey"]      = meshDeviceKey;
+    data["meshAccessAddress"]  = sphereData.meshAccessAddress; // legacy
+    data["ibeaconUUID"]        = sphereData.iBeaconUUID;
+    data["ibeaconMajor"]       = this.cloudResponse.major;
+    data["ibeaconMinor"]       = this.cloudResponse.minor;
+
+    let unsubscribe = core.nativeBus.on(core.nativeBus.topics.setupProgress, (progress) => {
+      core.eventBus.emit("setupInProgress", { handle: this.handle, progress: 5 + progress });
+    });
+
+    return new Promise((resolve, reject) => {
+      BluenetPromiseWrapper.connect(this.handle, sphereId)
+        .then(() => {
+          return BluenetPromiseWrapper.setupCrownstone(data);
+        })
+        .then(() => {
+          unsubscribe();
+          resolve();
+        })
+        .catch((err) => {
+          unsubscribe();
+          reject(err);
+        })
+    });
+  }
+
+}
