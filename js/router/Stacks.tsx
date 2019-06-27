@@ -22,7 +22,7 @@ export const Stacks = {
               options: {
                 bottomTab: {
                   text: "Select",
-                  icon: require('../images/icons/overview.png'),
+                  icon: require('../images/icons/searching.png'),
                 }
               }
             }
@@ -35,7 +35,7 @@ export const Stacks = {
               options: {
                 bottomTab: {
                   text: "User Settings",
-                  icon: require('../images/icons/cog.png'),
+                  icon: require('../images/icons/user.png'),
                 }
               }
             }
@@ -57,7 +57,7 @@ export const Stacks = {
               options: {
                 bottomTab: {
                   text: "Operations",
-                  icon: require('../images/icons/overview.png'),
+                  icon: require('../images/icons/switches.png'),
                 }
               }
             }
@@ -83,7 +83,7 @@ export const Stacks = {
               options: {
                 bottomTab: {
                   text: "User Settings",
-                  icon: require('../images/icons/cog.png'),
+                  icon: require('../images/icons/user.png'),
                 }
               }
             }

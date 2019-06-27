@@ -2,19 +2,10 @@ import { LiveComponent } from "../LiveComponent";
 import * as React from "react";
 import { ScrollView, View, Text, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
 import { core } from "../../core";
-import Toast from 'react-native-same-toast';
-import { ListEditableItems } from "../components/ListEditableItems";
 import { colors, styles } from "../styles";
-import { SetupHelper } from "../../native/setup/SetupHelper";
 import { TopBarUtil } from "../../util/TopBarUtil";
 import { AnimatedBackground } from "../components/animated/AnimatedBackground";
 import { NativeBus } from "../../native/libInterface/NativeBus";
-import { Icon } from "../components/Icon";
-import { BleUtil } from "../../util/BleUtil";
-import { SlideInView } from "../components/animated/SlideInView";
-import { BluenetPromiseWrapper } from "../../native/libInterface/BluenetPromise";
-import { Stacks } from "../../router/Stacks";
-import { NavigationUtil } from "../../util/NavigationUtil";
 import { xUtil } from "../../util/StandAloneUtil";
 
 

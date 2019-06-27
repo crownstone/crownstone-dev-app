@@ -16,6 +16,7 @@ import { BluenetPromiseWrapper } from "../../native/libInterface/BluenetPromise"
 import { Stacks } from "../../router/Stacks";
 import { NavigationUtil } from "../../util/NavigationUtil";
 import { xUtil } from "../../util/StandAloneUtil";
+import { LargeExplanation } from "../components/editComponents/LargeExplanation";
 
 
 const BLE_STATE_READY = "ready";
@@ -54,6 +55,8 @@ export class FirmwareTest extends LiveComponent<{
     dimmerThreshold: null,
     rssiAverage: null,
     referenceId: null,
+    firmwareVersion: null,
+    bootloaderVersion: null,
   }
 
 
@@ -496,6 +499,7 @@ export class FirmwareTest extends LiveComponent<{
       items.push({
         label: 'Reset Errors',
         type: 'button',
+        style: {color:colors.menuTextSelected.hex},
         callback: (value) => {
           this.bleAction(BluenetPromiseWrapper.clearErrors, [{
             dimmerOnFailure:    true,
@@ -509,6 +513,27 @@ export class FirmwareTest extends LiveComponent<{
       });
     }
 
+    items.push({
+      label: "Get Firmware Version",
+      type: 'button',
+      style: {color:colors.menuTextSelected.hex},
+      callback: () => {
+        this.bleAction(BluenetPromiseWrapper.getFirmwareVersion, [this.props.handle], null, (firmwareVersion) => {
+          this.crownstoneState.firmwareVersion = firmwareVersion.data;
+          this.forceUpdate();
+        })
+      }
+    });
+    items.push({ label: "Firmware: " + this.crownstoneState.firmwareVersion || " not requested yet.", type: 'explanation', below: true, color: explanationColor });
+
+    if (this.state.mode === "verified") {
+      let state = core.store.getState();
+      let sphere = state.spheres[this.crownstoneState.referenceId];
+      if (sphere) {
+        items.push({ label: "In Sphere " + sphere.config.name, type: 'explanation', below: false, color: explanationColor });
+      }
+    }
+    items.push({type: 'spacer'});
     items.push({type: 'spacer'});
     items.push({type: 'spacer'});
 

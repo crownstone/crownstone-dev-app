@@ -18,6 +18,7 @@ import { SlideInView } from "../components/animated/SlideInView";
 import { core } from "../../core";
 import { NavigationUtil } from "../../util/NavigationUtil";
 import { Stacks } from "../../router/Stacks";
+import { Bluenet } from "../../native/libInterface/Bluenet";
 
 let smallText : TextStyle = { fontSize:12, paddingLeft:10, paddingRight:10};
 
@@ -32,6 +33,7 @@ export class StoneSelector extends LiveComponent<any, any> {
   doUpdate = false;
   data : any;
   scanning = false;
+  HFscanning = false;
 
   constructor(props) {
     super(props);
@@ -80,6 +82,7 @@ export class StoneSelector extends LiveComponent<any, any> {
   startScanning() {
     if (this.scanning === false) {
       this.scanning = true;
+      this.refresh();
       this.setRefreshTimeout();
       this.unsubscribe.push(NativeBus.on(NativeBus.topics.advertisement, (data: crownstoneAdvertisement) => {
         this.update(data, 'verified');
@@ -90,13 +93,29 @@ export class StoneSelector extends LiveComponent<any, any> {
       this.unsubscribe.push(NativeBus.on(NativeBus.topics.setupAdvertisement, (data: crownstoneAdvertisement) => {
         this.update(data, 'setup');
       }))
-      // this.unsubscribe.push(NativeBus.on(NativeBus.topics.dfuAdvertisement, (data : crownstoneAdvertisement) => {
-      //
-      // }))
+      this.unsubscribe.push(NativeBus.on(NativeBus.topics.dfuAdvertisement, (data : crownstoneAdvertisement) => {
+        this.startHFScanning();
+        this.update(data, 'dfu');
+      }))
+    }
+  }
+
+  startHFScanning() {
+    if (this.HFscanning === false) {
+      this.HFscanning = true;
+      Bluenet.startScanningForCrownstones();
+    }
+  }
+
+  stopHFScanning() {
+    if (this.HFscanning === true) {
+      this.HFscanning = false;
+      Bluenet.startScanningForCrownstonesUniqueOnly();
     }
   }
 
   stopScanning() {
+    this.stopHFScanning();
     this.scanning = false;
     this.unsubscribe.forEach((unsub) => { unsub(); });
     this.unsubscribe = [];
@@ -168,6 +187,7 @@ export class StoneSelector extends LiveComponent<any, any> {
 
 
   refresh() {
+    this.stopHFScanning();
     this.data = {
       verified: {},
       unverified: {},
@@ -290,6 +310,8 @@ export class StoneSelector extends LiveComponent<any, any> {
           <View style={{flex:1}}/>
           <FilterButton label={"Unverified"} selected={this.state.unverified} callback={() => { this.setState({unverified: !this.state.unverified})}}/>
           <View style={{flex:1}}/>
+          <FilterButton label={"DFU"} selected={this.state.dfu} callback={() => { this.setState({dfu: !this.state.dfu})}}/>
+          <View style={{flex:1}}/>
           <FilterButton label={"MAC"} selected={this.state.showHandleFilter} callback={() => {
             this.setState({showHandleFilter: !this.state.showHandleFilter})
           }}/>
@@ -339,12 +361,12 @@ export class StoneSelector extends LiveComponent<any, any> {
 
 
 function FilterButton(props) {
-  let unselectedFilter : ViewStyle = { backgroundColor: colors.white.hex, borderColor: colors.csBlue.hex, borderWidth:1, borderRadius: 17, height: 34, ...styles.centered }
+  let unselectedFilter : ViewStyle = { backgroundColor: colors.white.hex, borderColor: colors.csBlue.hex, borderWidth:1, borderRadius: 18, height: 36, ...styles.centered }
   let selectedFilter : ViewStyle = { ...unselectedFilter,  backgroundColor: colors.menuTextSelected.rgba(0.75),  }
 
   return (
     <TouchableOpacity onPress={() => { props.callback() }} style={ props.selected ? selectedFilter : unselectedFilter}>
-      <Text style={{fontSize:13, paddingLeft:15, paddingRight:15, fontWeight:'bold', color: props.selected ? colors.white.hex : colors.black.rgba(0.5) }}>{props.label}</Text>
+      <Text style={{fontSize:13, paddingLeft:10, paddingRight:10, fontWeight:'bold', color: props.selected ? colors.white.hex : colors.black.rgba(0.5) }}>{props.label}</Text>
     </TouchableOpacity>
   )
 }
@@ -370,7 +392,7 @@ function CrownstoneEntry(props) {
     case 'dfu': backgroundColor = colors.purple.rgba(opacity); break;
   }
 
-  let hasType = props.item.data.serviceData.deviceType !== 'undefined';
+  let hasType = props.item.data && props.item.data.serviceData && props.item.data.serviceData.deviceType !== 'undefined' || false;
 
   return (
     <View style={{
@@ -384,7 +406,10 @@ function CrownstoneEntry(props) {
     }}>
       <View style={{flex:1}} />
       <View style={{ flexDirection:'row', alignItems: 'center', }}>
-        <TouchableOpacity style={{ height:height }} onPress={() => { props.callback() }}>
+        <TouchableOpacity style={{ height:height }} onPress={() => {
+          if (props.item.type !== "dfu") {
+            props.callback();
+          }}}>
           <View style={{flex:1}} />
           <View style={{ flexDirection:'row' }}>
             <Text style={{width:60}}>{props.item.data.name}</Text>
