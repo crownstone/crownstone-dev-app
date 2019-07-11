@@ -34,6 +34,7 @@ export class StoneSelector extends LiveComponent<any, any> {
   data : any;
   scanning = false;
   HFscanning = false;
+  HFTimeout;
 
   constructor(props) {
     super(props);
@@ -91,6 +92,7 @@ export class StoneSelector extends LiveComponent<any, any> {
         this.update(data, 'unverified');
       }))
       this.unsubscribe.push(NativeBus.on(NativeBus.topics.setupAdvertisement, (data: crownstoneAdvertisement) => {
+        console.log("SETUP PACKET", data.handle, data.name, data.rssi)
         this.update(data, 'setup');
       }))
       this.unsubscribe.push(NativeBus.on(NativeBus.topics.dfuAdvertisement, (data : crownstoneAdvertisement) => {
@@ -100,15 +102,27 @@ export class StoneSelector extends LiveComponent<any, any> {
     }
   }
 
-  startHFScanning() {
+
+
+
+  startHFScanning(timeoutMs = 0) {
     if (this.HFscanning === false) {
       this.HFscanning = true;
       Bluenet.startScanningForCrownstones();
+      if (timeoutMs != 0) {
+        this.HFTimeout = setTimeout(() => {
+          this.stopHFScanning();
+        }, timeoutMs)
+      }
+    }
+    if (timeoutMs === 0) {
+      clearTimeout(this.HFTimeout);
     }
   }
 
   stopHFScanning() {
     if (this.HFscanning === true) {
+      clearTimeout(this.HFTimeout);
       this.HFscanning = false;
       Bluenet.startScanningForCrownstonesUniqueOnly();
     }
@@ -188,6 +202,7 @@ export class StoneSelector extends LiveComponent<any, any> {
 
   refresh() {
     this.stopHFScanning();
+    this.startHFScanning(500);
     this.data = {
       verified: {},
       unverified: {},

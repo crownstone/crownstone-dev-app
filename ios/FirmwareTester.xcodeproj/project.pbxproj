@@ -1121,6 +1121,14 @@
 			path = Application;
 			sourceTree = "<group>";
 		};
+		DEDB15023E5542DEA57C09BC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			path = Application;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */

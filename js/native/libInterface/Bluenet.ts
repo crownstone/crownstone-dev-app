@@ -85,6 +85,7 @@ const BluenetAPI = {
   toggleSwitchState:          () => { console.log("BluenetBridgeCall:  toggleSwitchState:"); },
   setMeshChannel:             () => { console.log("BluenetBridgeCall:  setMeshChannel:   "); },
   getTrackingState:           () => { console.log("BluenetBridgeCall:  getTrackingState: "); },
+  getResetCounter:            () => { console.log("BluenetBridgeCall:  getResetCounter: "); },
   setDevicePreferences:       () => { console.log("BluenetBridgeCall:  setDevicePreferences: "); },
   setLocationState:           () => { console.log("BluenetBridgeCall:  setLocationState: "); },
   startAdvertising:           () => { console.log("BluenetBridgeCall:  startAdvertising: "); },

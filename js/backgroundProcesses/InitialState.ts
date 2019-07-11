@@ -48,6 +48,7 @@ export const insertInitialState = function() {
   insertKey("adminKeyForCrown", KEY_TYPES.ADMIN_KEY);
   insertKey("memberKeyForHome", KEY_TYPES.MEMBER_KEY);
   insertKey("guestKeyForOther", KEY_TYPES.BASIC_KEY);
+  insertKey("localizationKeyX", KEY_TYPES.LOCALIZATION_KEY);
   insertKey("guestKeyForOther", KEY_TYPES.SERVICE_DATA_KEY);
   insertKey("meshKeyForStones", KEY_TYPES.MESH_NETWORK_KEY);
   insertKey("meshAppForStones", KEY_TYPES.MESH_APPLICATION_KEY);

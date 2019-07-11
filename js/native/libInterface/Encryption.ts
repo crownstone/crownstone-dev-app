@@ -50,6 +50,7 @@ class EncryptionManagerClass {
         adminKey:       keyMap[KEY_TYPES.ADMIN_KEY],
         memberKey:      keyMap[KEY_TYPES.MEMBER_KEY],
         basicKey:       keyMap[KEY_TYPES.BASIC_KEY],
+        localizationKey:keyMap[KEY_TYPES.LOCALIZATION_KEY],
         serviceDataKey: keyMap[KEY_TYPES.SERVICE_DATA_KEY],
         referenceId:    sphereIds[i],
         iBeaconUuid:    sphere.config.iBeaconUUID

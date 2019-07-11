@@ -53,6 +53,7 @@ export class FirmwareTest extends LiveComponent<{
     relayState: null,
     dimmerState: null,
     dimmerThreshold: null,
+    resetCounter: null,
     rssiAverage: null,
     referenceId: null,
     firmwareVersion: null,
@@ -526,12 +527,38 @@ export class FirmwareTest extends LiveComponent<{
     });
     items.push({ label: "Firmware: " + this.crownstoneState.firmwareVersion || " not requested yet.", type: 'explanation', below: true, color: explanationColor });
 
+    items.push({
+      label: "Get Reset Counter",
+      type: 'button',
+      style: {color:colors.menuTextSelected.hex},
+      callback: () => {
+        this.bleAction(BluenetPromiseWrapper.getResetCounter, [this.props.handle], null, (resetCounter) => {
+          this.crownstoneState.resetCounter = resetCounter.data;
+          this.forceUpdate();
+        })
+      }
+    });
+    items.push({ label: "Reset Count: " + this.crownstoneState.resetCounter || " not requested yet.", type: 'explanation', below: true, color: explanationColor });
+
     if (this.state.mode === "verified") {
       let state = core.store.getState();
       let sphere = state.spheres[this.crownstoneState.referenceId];
       if (sphere) {
         items.push({ label: "In Sphere " + sphere.config.name, type: 'explanation', below: false, color: explanationColor });
       }
+    }
+
+    if (this.state.mode !== 'unverified') {
+      items.push({
+        label: "Go in DFU mode",
+        type: 'button',
+        style: {color:colors.red.hex},
+        callback: () => {
+          this.bleAction(BluenetPromiseWrapper.putInDFU, [this.props.handle], null, () => {
+            NavigationUtil.setRoot( Stacks.searchingForCrownstones() )
+          })
+        }
+      });
     }
     items.push({type: 'spacer'});
     items.push({type: 'spacer'});

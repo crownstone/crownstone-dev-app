@@ -142,5 +142,7 @@ RCT_EXTERN_METHOD(unsubscribeNearest)
 RCT_EXTERN_METHOD(subscribeToUnverified)
 RCT_EXTERN_METHOD(unsubscribeUnverified)
 
+RCT_EXTERN_METHOD(getResetCounter:(RCTResponseSenderBlock)callback)
+
 + (BOOL)requiresMainQueueSetup { return YES; }
 @end

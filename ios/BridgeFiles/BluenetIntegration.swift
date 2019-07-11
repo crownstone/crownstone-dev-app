@@ -184,15 +184,16 @@ open class BluenetJS: RCTEventEmitter {
         let adminKey     = keyData["adminKey"]  as? String
         let memberKey    = keyData["memberKey"] as? String
         let basicKey     = keyData["basicKey"]  as? String
+        let localizationKey = keyData["localizationKey"] as? String
         let serviceDataKey = keyData["serviceDataKey"]  as? String
         let referenceId  = keyData["referenceId"]  as? String
         if (adminKey == nil && memberKey == nil && basicKey == nil || referenceId == nil) {
           callback([["error" : true, "data": "Missing the Keys required for Bluenet Settings. At least one of the following should be provided: adminKey, memberKey, basicKey and referenceId."]])
           return
         }
-        sets.append(KeySet(adminKey: adminKey, memberKey: memberKey, basicKey: basicKey, serviceDataKey: serviceDataKey, referenceId: referenceId!))
+        sets.append(KeySet(adminKey: adminKey, memberKey: memberKey, basicKey: basicKey, localizationKey: localizationKey, serviceDataKey: serviceDataKey, referenceId: referenceId!))
         
-        watchSets[referenceId!] = ["adminKey": adminKey, "memberKey": memberKey, "basicKey": basicKey, "serviceDataKey": serviceDataKey]
+        watchSets[referenceId!] = ["adminKey": adminKey, "memberKey": memberKey, "basicKey": basicKey, "localizationKey": localizationKey, "serviceDataKey": serviceDataKey]
         
       }
     }
@@ -204,9 +205,10 @@ open class BluenetJS: RCTEventEmitter {
     GLOBAL_BLUENET.bluenet.loadKeysets(encryptionEnabled: true, keySets: sets)
     
     GLOBAL_BLUENET.watchStateManager.loadState("keysets", watchSets)
-   
+    
     callback([["error" : false]])
   }
+  
   
   @objc func isReady(_ callback: @escaping RCTResponseSenderBlock) {
     LOGGER.info("BluenetBridge: Called isReady")
@@ -700,6 +702,7 @@ open class BluenetJS: RCTEventEmitter {
     let adminKey           = data["adminKey"] as? String
     let memberKey          = data["memberKey"] as? String
     let basicKey           = data["basicKey"] as? String
+    let localizationKey    = data["localizationKey"] as? String
     let serviceDataKey     = data["serviceDataKey"] as? String
     let meshNetworkKey     = data["meshNetworkKey"] as? String
     let meshApplicationKey = data["meshApplicationKey"] as? String
@@ -709,27 +712,29 @@ open class BluenetJS: RCTEventEmitter {
     let ibeaconMajor       = data["ibeaconMajor"] as? NSNumber
     let ibeaconMinor       = data["ibeaconMinor"] as? NSNumber
     
-   
+    
     if (
       crownstoneId != nil &&
-      sphereId != nil &&
-      adminKey != nil &&
-      memberKey != nil &&
-      basicKey != nil &&
-      serviceDataKey != nil &&
-      meshNetworkKey != nil &&
-      meshApplicationKey != nil &&
-      meshDeviceKey != nil &&
-      meshAccessAddress != nil &&
-      ibeaconUUID != nil &&
-      ibeaconMajor != nil &&
-      ibeaconMinor != nil) {
+        sphereId != nil &&
+        adminKey != nil &&
+        memberKey != nil &&
+        basicKey != nil &&
+        localizationKey != nil &&
+        serviceDataKey != nil &&
+        meshNetworkKey != nil &&
+        meshApplicationKey != nil &&
+        meshDeviceKey != nil &&
+        meshAccessAddress != nil &&
+        ibeaconUUID != nil &&
+        ibeaconMajor != nil &&
+        ibeaconMinor != nil) {
       GLOBAL_BLUENET.bluenet.setup.setup(
         crownstoneId: (crownstoneId!).uint16Value,
         sphereId: (sphereId!).uint8Value,
         adminKey: adminKey!,
         memberKey: memberKey!,
         basicKey: basicKey!,
+        localizationKey: localizationKey!,
         serviceDataKey: serviceDataKey!,
         meshNetworkKey: meshNetworkKey!,
         meshApplicationKey: meshApplicationKey!,
@@ -746,10 +751,10 @@ open class BluenetJS: RCTEventEmitter {
           else {
             callback([["error" : true, "data": "UNKNOWN ERROR IN setupCrownstone \(err) "]])
           }
-        }
+      }
     }
     else {
-      callback([["error" : true, "data": "Missing one of the datafields required for setup. 1\(crownstoneId != nil) 2\(sphereId != nil) 3\(adminKey != nil) 4\(memberKey != nil) 5\(basicKey != nil) 6\(serviceDataKey != nil) 7\(meshApplicationKey != nil) 8\(meshNetworkKey != nil) 9\(meshDeviceKey != nil) 10\(meshAccessAddress != nil) 11\(ibeaconUUID != nil) 12\(ibeaconMajor != nil) 13\(ibeaconMinor != nil)"]])
+      callback([["error" : true, "data": "Missing one of the datafields required for setup. 1\(crownstoneId != nil) 2\(sphereId != nil) 3\(adminKey != nil) 4\(memberKey != nil) 5\(basicKey != nil) 6\(localizationKey != nil) 7\(serviceDataKey != nil) 8\(meshApplicationKey != nil) 9\(meshNetworkKey != nil) 10\(meshDeviceKey != nil) 11\(meshAccessAddress != nil) 12\(ibeaconUUID != nil) 13\(ibeaconMajor != nil) 14\(ibeaconMinor != nil)"]])
     }
   }
   
@@ -1403,4 +1408,19 @@ open class BluenetJS: RCTEventEmitter {
         }
     }
   }
+    
+    @objc func getResetCounter(_ callback: @escaping RCTResponseSenderBlock) {
+        LOGGER.info("BluenetBridge: Called getResetCounter")
+        GLOBAL_BLUENET.bluenet.state.getResetCounter()
+            .done{ resetCounter in callback([["error" : false, "data": resetCounter]]) }
+            .catch{err in
+                if let bleErr = err as? BluenetError {
+                    callback([["error" : true, "data": getBluenetErrorString(bleErr)]])
+                }
+                else {
+                    callback([["error" : true, "data": "UNKNOWN ERROR IN getResetCounter \(err)"]])
+                }
+        }
+    }
+
 }

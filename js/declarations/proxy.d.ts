@@ -55,6 +55,7 @@ interface BluenetPromiseWrapperProtocol {
   sendMeshNoOp()                                : Promise< void >,
   setMeshChannel(channel)                       : Promise< void >,
 
+  getResetCounter()                             : Promise< number >,
   getTrackingState()                            : Promise< trackingState >,
   isDevelopmentEnvironment()                    : Promise< boolean >,
   setupPulse()                                  : Promise< void >,
@@ -168,17 +169,34 @@ interface nearestStone  {
   dfuMode   : boolean
   verified  : boolean
 }
-
 interface keySet  {
-  adminKey:       string,
-  memberKey:      string,
-  basicKey:       string,
-  serviceDataKey: string,
-  referenceId:    string,
-  iBeaconUuid:    string,
+  adminKey:        string,
+  memberKey:       string,
+  basicKey:        string,
+  localizationKey: string,
+  serviceDataKey:  string,
+  referenceId:     string,
+  iBeaconUuid:     string,
 }
 
 interface crownstoneModes {
   setupMode: boolean,
   dfuMode: boolean,
+}
+
+interface setupData {
+  crownstoneId:       number,
+  sphereId:           number,
+  adminKey:           string,
+  memberKey:          string,
+  basicKey:           string,
+  localizationKey:    string,
+  serviceDataKey:     string,
+  meshNetworkKey:     string,
+  meshApplicationKey: string,
+  meshDeviceKey:      string,
+  meshAccessAddress:  string,
+  ibeaconUUID:        string,
+  ibeaconMajor:       number,
+  ibeaconMinor:       number,
 }
