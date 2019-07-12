@@ -17,6 +17,8 @@ import { Stacks } from "../../router/Stacks";
 import { NavigationUtil } from "../../util/NavigationUtil";
 import { xUtil } from "../../util/StandAloneUtil";
 import { LargeExplanation } from "../components/editComponents/LargeExplanation";
+import { LOG, LOGe } from "../../logging/Log";
+import { BlePromiseManager } from "../../logic/BlePromiseManager";
 
 
 const BLE_STATE_READY = "ready";
@@ -252,7 +254,7 @@ export class FirmwareTest extends LiveComponent<{
   }
 
 
-  bleAction(action : (...any) => {}, props = [], type = null, resultHandler = (any) => {}) {
+  bleAction(action : (...any) => {}, props = [], type = null, resultHandler = (any) => {}, connect = true) {
     if (this.state.bleState === BLE_STATE_BUSY) {
       Toast.showWithGravity('  Bluetooth Busy!  ', Toast.SHORT, Toast.CENTER);
       return;
@@ -261,17 +263,30 @@ export class FirmwareTest extends LiveComponent<{
     this.setUpdateFreeze(type);
 
     clearTimeout(this.bleStateResetTimeout);
-    let proxy = BleUtil.getProxy(this.props.handle, this.crownstoneState.referenceId || core.sessionMemory.usingSphereForSetup);
-
+    let promise = null;
     this.setState({bleState: BLE_STATE_BUSY})
-    proxy.performPriority(action, props)
+
+    if (connect) {
+      let proxy = BleUtil.getProxy(this.props.handle, this.crownstoneState.referenceId || core.sessionMemory.usingSphereForSetup);
+      promise = proxy.performPriority(action, props)
+    }
+    else {
+      let actionPromise = () => {
+        return action.apply(this, props);
+      };
+      // @ts-ignore
+      promise = BlePromiseManager.registerPriority(actionPromise, { from: 'performing self contained action' })
+    }
+
+    // perform.
+    promise
       .then((result) => {
         resultHandler(result);
-        this.setFreezeTimeout(type);
+        this.setFreezeTimeout(null);
         this.setState({bleState: BLE_STATE_READY});
       })
       .catch((err) => {
-        this.clearUpdateFreeze(type);
+        this.clearUpdateFreeze(null);
         this.showBleError(err);
       })
   }
@@ -352,7 +367,7 @@ export class FirmwareTest extends LiveComponent<{
         label: "Recover",
         type: 'button',
         callback: () => {
-          this.bleAction(BluenetPromiseWrapper.recover, [this.props.handle])
+          this.bleAction(BluenetPromiseWrapper.recover, [this.props.handle], null, () => {}, false);
         }
       });
       items.push({label:"Recovery is possible in the first 30 seconds after power on.", type: 'explanation', below: true, color: explanationColor});
