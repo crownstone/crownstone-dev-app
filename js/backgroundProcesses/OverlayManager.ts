@@ -8,6 +8,8 @@ class OverlayManagerClass {
 
   init() {
     if (this._initialized === false) {
+      this._initialized = true;
+      console.log("OVERLAYED")
       core.eventBus.on('showAicoreTimeCustomizationOverlay', (data) => { NavigationUtil.showOverlay('AicoreTimeCustomizationOverlay',{data: data}); })
 
       // ble status popup
@@ -55,6 +57,7 @@ class OverlayManagerClass {
       core.eventBus.on('showProgress',         (data) => { NavigationUtil.showOverlay('Processing',    {data: data}); })
       core.eventBus.on('showCustomOverlay',    (data) => { NavigationUtil.showOverlay('SimpleOverlay', {data: data}); })
       core.eventBus.on('CalibrateTapToToggle', (data) => { NavigationUtil.showOverlay('TapToToggleCalibration',{data: data}); })
+      core.eventBus.on('showNumericOverlay',   (data) => { NavigationUtil.showOverlay('NumericOverlay',{data: data}); })
     }
   }
 }

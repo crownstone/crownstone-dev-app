@@ -19,6 +19,7 @@ import { core } from "../../core";
 import { NavigationUtil } from "../../util/NavigationUtil";
 import { Stacks } from "../../router/Stacks";
 import { Bluenet } from "../../native/libInterface/Bluenet";
+import { FocusManager } from "../../backgroundProcesses/FocusManager";
 
 let smallText : TextStyle = { fontSize:12, paddingLeft:10, paddingRight:10};
 
@@ -259,7 +260,10 @@ export class StoneSelector extends LiveComponent<any, any> {
           item={item}
           tracking={item.handle === this.state.tracking}
           track={() => { this.setState({tracking: this.state.tracking === item.handle ? null : item.handle })}}
-          callback={() => { NavigationUtil.setRoot( Stacks.firmwareTesting({ handle: item.handle, item: item.data, mode: item.type, name: item.data.name }))}}
+          callback={() => {
+            FocusManager.setHandleToFocusOn(item.handle, item.type, item.data.name);
+            NavigationUtil.setRoot( Stacks.firmwareTesting({ handle: item.handle, item: item.data, mode: item.type, name: item.data.name }));
+          }}
         />
       );
     })

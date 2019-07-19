@@ -21,6 +21,7 @@ import { LOG, LOGe } from "../../logging/Log";
 import { BlePromiseManager } from "../../logic/BlePromiseManager";
 import { ConnectionManager } from "../../backgroundProcesses/ConnectionManager";
 import { FocusManager } from "../../backgroundProcesses/FocusManager";
+import { StatusIndicator } from "./FirmwareTest";
 
 
 const BLE_STATE_READY = "ready";
@@ -28,7 +29,7 @@ const BLE_STATE_BUSY = "busy";
 
 const PROXY_OPTIONS = {keepConnectionOpen: true}
 
-export class FirmwareTest extends LiveComponent<{
+export class AdvancedConfig extends LiveComponent<{
   item: crownstoneAdvertisement,
   handle: string,
   name: string,
@@ -84,7 +85,6 @@ export class FirmwareTest extends LiveComponent<{
     }
 
     FocusManager.setUpdateFreeze(type);
-
 
     let promise = null;
     this.setState({bleState: BLE_STATE_BUSY})
@@ -161,231 +161,148 @@ export class FirmwareTest extends LiveComponent<{
   _getItems(explanationColor) {
     const store = core.store;
     let state = store.getState();
-
     let items = [];
 
-    items.push({label:"OPERATIONS", type: 'explanation', below: false, color: explanationColor});
-    if (this.state.mode === 'setup') {
-      items.push({
-        label: this.state.setupActive ? "Setting up Crownstone..." : "Perform setup",
-        type: 'button',
-        style: {color:colors.menuTextSelected.hex},
-        progress: this.state.setupProgress,
-        callback: () => {
-          this._setupCrownstone();
-        }
-      });
-      items.push({label:"Using sphere: \"" + state.spheres[core.sessionMemory.usingSphereForSetup].config.name + "\" for setup.", type: 'explanation', below: true, color: explanationColor});
-    }
-
-    if (this.state.mode === "verified") {
-      items.push({
-        label: "Factory Reset",
-        type: 'button',
-        callback: () => {
-          this.bleAction(BluenetPromiseWrapper.commandFactoryReset)
-        }
-      });
-      items.push({label:"Put your Crownstone back in setup mode.", type: 'explanation', below: true, color: explanationColor});
-    }
-
-    if (this.state.mode === 'unverified') {
-      items.push({
-        label: "Recover",
-        type: 'button',
-        callback: () => {
-          this.bleAction(BluenetPromiseWrapper.recover, [this.props.handle], null, () => {}, false);
-        }
-      });
-      items.push({label:"Recovery is possible in the first 30 seconds after power on.", type: 'explanation', below: true, color: explanationColor});
-    }
-
-
-
-    items.push({label:"CONTROL", type: 'explanation', below: false, color: explanationColor, alreadyPadded:true});
     if (this.state.mode === 'unverified') {
       items.push({label:"Disabled for unverified Crownstone.", type: 'info'});
     }
     else {
-      if (FocusManager.crownstoneState.dimmingEnabled) {
-        items.push({
-          label: 'Set Switch',
-          type: 'slider',
-          disabled: FocusManager.crownstoneState.switchState === null,
-          value: FocusManager.crownstoneState.switchStateValue,
-          min: 0,
-          max: 1,
-          callback: (value) => {
-            this.bleAction(BluenetPromiseWrapper.setSwitchState, [value], 'switchState')
-            FocusManager.crownstoneState.switchStateValue = value;
-            this.forceUpdate();
-          }
-        });
-      }
-      else {
-        items.push({
-          label: 'Set Switch',
-          type: 'switch',
-          disabled: FocusManager.crownstoneState.switchStateValue === null,
-          value: FocusManager.crownstoneState.switchStateValue === 1,
-          callback: (value) => {
-            this.bleAction(BluenetPromiseWrapper.setSwitchState, [value], 'switchState')
-            FocusManager.crownstoneState.switchStateValue = value ? 1 : 0;
-            this.forceUpdate();
-          }
-        });
-      }
-      if (FocusManager.crownstoneState.dimmingEnabled) {
-        items.push({
-          label: 'Cast Switch',
-          type: 'slider',
-          disabled: FocusManager.crownstoneState.switchState === null,
-          value: FocusManager.crownstoneState.switchStateValue,
-          min: 0,
-          max: 1,
-          callback: (value) => {
-            this.bleAction(BluenetPromiseWrapper.broadcastSwitch, [FocusManager.crownstoneState.referenceId, FocusManager.crownstoneState.stoneId, value], 'switchState')
-            FocusManager.crownstoneState.switchStateValue = value;
-            this.forceUpdate();
-          }
-        });
-      }
-      else {
-        items.push({
-          label: 'Cast Switch',
-          type: 'switch',
-          disabled: FocusManager.crownstoneState.switchStateValue === null,
-          value: FocusManager.crownstoneState.switchStateValue === 1,
-          callback: (value) => {
-            this.bleAction(BluenetPromiseWrapper.broadcastSwitch, [FocusManager.crownstoneState.referenceId, FocusManager.crownstoneState.stoneId, value], 'switchState');
-            FocusManager.crownstoneState.switchStateValue = value ? 1 : 0;
-            this.forceUpdate();
-          }
-        });
-      }
-      items.push({
-        label: 'Set Relay',
-        type: 'switch',
-        disabled: FocusManager.crownstoneState.relayState === null,
-        value: FocusManager.crownstoneState.relayState === 1,
-        callback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.switchRelay, [value], 'relayState');
-          FocusManager.crownstoneState.relayState = value ? 1 : 0;
-          this.forceUpdate();
-        }
-      });
-      if (FocusManager.crownstoneState.dimmingEnabled) {
-        items.push({
-          label: 'Set Dimmer',
-          type: 'slider',
-          disabled: FocusManager.crownstoneState.dimmerState === null,
-          value: FocusManager.crownstoneState.dimmerState,
-          min: 0,
-          max: 0.99,
-          callback: (value) => {
-            this.bleAction(BluenetPromiseWrapper.switchDimmer, [value], 'dimmerState');
-            FocusManager.crownstoneState.dimmerState = value;
-            this.forceUpdate();
-          }
-        });
-      }
-      else {
-        items.push({label:"Dimming is disabled.", type: 'info'});
-      }
-    }
+      items.push({label:"CONFIGS", type: 'explanation', color: explanationColor});
 
-    items.push({label:"CONFIG", type: 'explanation', below: false, color: explanationColor});
-    if (this.state.mode === 'unverified') {
-      items.push({label:"Disabled for unverified Crownstone.", type: 'info'});
-    }
-    else {
       items.push({
-        label: 'Allow Dimming',
-        type: 'switch',
-        disabled: FocusManager.crownstoneState.dimmingEnabled === null,
-        value: FocusManager.crownstoneState.dimmingEnabled,
-        callback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.allowDimming, [value], 'dimmingEnabled')
-          FocusManager.crownstoneState.dimmingEnabled = value;
+        label: 'Switchcraft Threshold',
+        type: 'numericGetSet',
+        value: FocusManager.crownstoneState.switchCraftThreshold || null,
+        getCallback: (value) => {
+          Alert.alert("Not implemented getCallback!")
+        },
+        setCallback: (value) => {
+          Alert.alert("Not implemented setCallback!")
+        }
+      });
+
+      items.push({
+        label: 'Max Chip Temp',
+        type: 'numericGetSet',
+        value: FocusManager.crownstoneState.maxChipTemp || null,
+        getCallback: (value) => {
+          Alert.alert("Not implemented getCallback!")
+        },
+        setCallback: (value) => {
+          Alert.alert("Not implemented setCallback!")
+        }
+      });
+
+      items.push({label:"DIMMER", type: 'explanation', color: explanationColor});
+      items.push({
+        label: 'Dimmer Threshold',
+        type: 'numericGetSet',
+        value: FocusManager.crownstoneState.dimmerThreshold || null,
+        getCallback: (value) => {
+          Alert.alert("Not implemented getCallback!")
+        },
+        setCallback: (value) => {
+          Alert.alert("Not implemented setCallback!")
+        }
+      });
+
+      items.push({
+        label: 'Dimmer Temp Up',
+        type: 'numericGetSet',
+        value: FocusManager.crownstoneState.dimmerTempUpThreshold || null,
+        getCallback: (value) => {
+          Alert.alert("Not implemented getCallback!")
+        },
+        setCallback: (value) => {
+          Alert.alert("Not implemented setCallback!")
+        }
+      });
+
+      items.push({
+        label: 'Dimmer Temp Down',
+        type: 'numericGetSet',
+        value: FocusManager.crownstoneState.dimmerTempDownThreshold || null,
+        getCallback: (value) => {
+          Alert.alert("Not implemented getCallback!")
+        },
+        setCallback: (value) => {
+          Alert.alert("Not implemented setCallback!")
+        }
+      });
+
+      items.push({label:"POWER MEASUREMENT", type: 'explanation', color: explanationColor});
+      items.push({
+        label: 'Voltage Zero',
+        type: 'numericGetSet',
+        value: FocusManager.crownstoneState.voltageZero || null,
+        getCallback: (value) => {
+          Alert.alert("Not implemented getCallback!")
+        },
+        setCallback: (value) => {
+          Alert.alert("Not implemented setCallback!")
         }
       });
       items.push({
-        label: 'Switch Locked',
-        type: 'switch',
-        disabled: FocusManager.crownstoneState.locked === null,
-        value: FocusManager.crownstoneState.locked,
-        callback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.lockSwitch, [value], 'locked');
-          FocusManager.crownstoneState.locked = value;
+        label: 'Current Zero',
+        type: 'numericGetSet',
+        value: FocusManager.crownstoneState.currentZero || null,
+        getCallback: (value) => {
+          Alert.alert("Not implemented getCallback!")
+        },
+        setCallback: (value) => {
+          Alert.alert("Not implemented setCallback!")
         }
       });
       items.push({
-        label: 'Switchcraft',
-        type: 'switch',
-        disabled: FocusManager.crownstoneState.switchCraft === null,
-        value: FocusManager.crownstoneState.switchCraft,
-        callback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setSwitchCraft, [value], 'switchCraft')
-          FocusManager.crownstoneState.switchCraft = value;
+        label: 'Power Zero',
+        type: 'numericGetSet',
+        value: FocusManager.crownstoneState.powerZero || null,
+        getCallback: (value) => {
+          Alert.alert("Not implemented getCallback!")
+        },
+        setCallback: (value) => {
+          Alert.alert("Not implemented setCallback!")
+        }
+      });
+
+
+      items.push({label:"ADC CONFIG", type: 'explanation', color: explanationColor});
+      items.push({
+        label: 'Voltage Multiplier',
+        type: 'numericGetSet',
+        value: FocusManager.crownstoneState.voltageMultiplier || null,
+        getCallback: (value) => {
+          Alert.alert("Not implemented getCallback!")
+        },
+        setCallback: (value) => {
+          Alert.alert("Not implemented setCallback!")
         }
       });
       items.push({
-        label: 'Reset Errors',
+        label: 'Current Multiplier',
+        type: 'numericGetSet',
+        value: FocusManager.crownstoneState.currentMultiplier || null,
+        getCallback: (value) => {
+          Alert.alert("Not implemented getCallback!")
+        },
+        setCallback: (value) => {
+          Alert.alert("Not implemented setCallback!")
+        }
+      });
+
+
+
+      items.push({label:"DEV COMMANDS", type: 'explanation', color: explanationColor});
+      items.push({
+        label: "Enable UART",
         type: 'button',
         style: {color:colors.menuTextSelected.hex},
-        callback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.clearErrors, [{
-            dimmerOnFailure:    true,
-            dimmerOffFailure:   true,
-            temperatureDimmer:  true,
-            temperatureChip:    true,
-            overCurrentDimmer:  true,
-            overCurrent:        true,
-          }])
+        callback: () => {
+          Alert.alert("Not implemented yet!")
         }
       });
+
     }
-
-    items.push({
-      label: "Get Firmware Version",
-      type: 'button',
-      style: {color:colors.menuTextSelected.hex},
-      callback: () => {
-        this.bleAction(BluenetPromiseWrapper.getFirmwareVersion, [this.props.handle], null, (firmwareVersion) => {
-          FocusManager.crownstoneState.firmwareVersion = firmwareVersion.data;
-          this.forceUpdate();
-        })
-      }
-    });
-    items.push({ label: "Firmware: " + FocusManager.crownstoneState.firmwareVersion || " not requested yet.", type: 'explanation', below: true, color: explanationColor });
-
-    items.push({
-      label: "Get Hardware Version",
-      type: 'button',
-      style: {color:colors.menuTextSelected.hex},
-      callback: () => {
-        this.bleAction(BluenetPromiseWrapper.getHardwareVersion, [this.props.handle], null, (hardwareVersion) => {
-          FocusManager.crownstoneState.hardwareVersion = hardwareVersion.data;
-          this.forceUpdate();
-        })
-      }
-    });
-    items.push({ label: "Hardware: " + FocusManager.crownstoneState.hardwareVersion || " not requested yet.", type: 'explanation', below: true, color: explanationColor });
-
-
-
-    items.push({
-      label: "Get Reset Counter",
-      type: 'button',
-      style: {color:colors.menuTextSelected.hex},
-      callback: () => {
-        this.bleAction(BluenetPromiseWrapper.getResetCounter, [this.props.handle], null, (resetCounter) => {
-          FocusManager.crownstoneState.resetCounter = resetCounter.data;
-          this.forceUpdate();
-        })
-      }
-    });
-    items.push({ label: "Reset Count: " + FocusManager.crownstoneState.resetCounter || " not requested yet.", type: 'explanation', below: true, color: explanationColor });
 
     if (this.state.mode === "verified") {
       let state = core.store.getState();
@@ -395,18 +312,6 @@ export class FirmwareTest extends LiveComponent<{
       }
     }
 
-    if (this.state.mode !== 'unverified') {
-      items.push({
-        label: "Go in DFU mode",
-        type: 'button',
-        style: {color:colors.red.hex},
-        callback: () => {
-          this.bleAction(BluenetPromiseWrapper.putInDFU, [this.props.handle], null, () => {
-            NavigationUtil.setRoot( Stacks.searchingForCrownstones() )
-          })
-        }
-      });
-    }
     items.push({type: 'spacer'});
     items.push({type: 'spacer'});
     items.push({type: 'spacer'});
@@ -444,7 +349,6 @@ export class FirmwareTest extends LiveComponent<{
         Alert.alert("BLE Error:", JSON.stringify(this.state.bleState, undefined, 2))
       }
     }
-
 
     return (
       <AnimatedBackground image={backgroundImage} >
@@ -520,48 +424,3 @@ export class FirmwareTest extends LiveComponent<{
     )
   }
 }
-
-export function StatusIndicator(props) {
-  let iconColorBase = props.iconColor && props.iconColor.hex || colors.white.hex;
-  let iconColor = iconColorBase;
-  let backgroundColor = props.backgroundColor;
-  if (props.value) {
-    iconColor = props.iconColor && props.iconColor.rgba(0.2) || colors.white.rgba(0.2)
-  }
-
-
-  let pending = props.pending;
-  if (props.disabled) {
-    iconColor = colors.white.rgba(0.75);
-    backgroundColor = colors.gray.rgba(0.5)
-    pending = false;
-  }
-  if (pending) {
-    backgroundColor = colors.csBlue.rgba(0.5)
-  }
-
-
-  return (
-    <TouchableOpacity style={{alignItems:'center', width: 70}} onPress={() => { if (props.callback) { props.callback(); } }}>
-      {pending ?
-        <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: backgroundColor, ...styles.centered }}>
-          <ActivityIndicator size={1} color={colors.white.hex} />
-        </View>
-        :
-        <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: backgroundColor }}>
-          <View style={{ width: 50, height: 50, ...styles.centered, position: 'absolute', top: 0, left: 0 }}>
-            <Icon name={props.icon} size={props.iconSize || 30} color={iconColor}/>
-          </View>
-          {props.value && !props.disabled ? <View
-            style={{ width: 50, height: 50, ...styles.centered, position: 'absolute', top: 0, left: 0, padding: 3 }}>
-            <Text style={{ fontSize: 15, color: iconColorBase, fontWeight: 'bold' }} minimumFontScale={0.2}
-                  numberOfLines={1} adjustsFontSizeToFit={true}>{props.value}</Text></View> : undefined}
-        </View>
-      }
-
-      <Text style={{fontSize:14, color: props.color || colors.black.rgba(0.8)}}>{props.label}</Text>
-    </TouchableOpacity>
-  )
-
-}
-

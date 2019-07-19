@@ -6,7 +6,6 @@ function lang(key,a?,b?,c?,d?,e?) {
 }
 import * as React from 'react'; import { Component } from 'react';
 import {
-  
   Text,
   View
 } from 'react-native';
@@ -26,9 +25,10 @@ import { SwitchBar }         from './editComponents/SwitchBar'
 import { TextEditBar }       from './editComponents/TextEditBar'
 import { TimePicker }        from './editComponents/TimePicker'
 import { TextBlob }          from "./editComponents/TextBlob";
+import { NumericGetSet }     from "./editComponents/NumericGetSet";
+import { CollapsableBar }    from "./editComponents/Collapsable";
 
 import {styles, colors, NORMAL_ROW_SIZE, EXTRA_LARGE_ROW_SIZE} from '../styles'
-import {CollapsableBar} from "./editComponents/Collapsable";
 
 
 /**
@@ -141,6 +141,8 @@ export class EditableItem extends Component<any, any> {
         return <TextBlob barHeight={NORMAL_ROW_SIZE} {...this.props} />;
       case 'timePicker':
         return <TimePicker barHeight={NORMAL_ROW_SIZE} {...this.props} />;
+      case 'numericGetSet':
+        return <NumericGetSet barHeight={NORMAL_ROW_SIZE} {...this.props} />;
       default:
         return (
           <View>

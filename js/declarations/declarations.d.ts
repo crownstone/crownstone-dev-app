@@ -5,6 +5,8 @@
 //   export default createResizedImage;
 // }
 
+import { EventBusClass } from "../util/EventBus";
+
 declare const global: {
   __DEV__: boolean
 };

@@ -50,7 +50,7 @@ export class SliderBar extends Component<any, any> {
             }
           }
         />
-        <Text style={[{fontSize:12, paddingLeft:5, width: 50, textAlign:'right'}, this.props.style]} >{this.props.value < 1 ? Math.round(100*this.props.value) * 0.01 : this.props.value}</Text>
+        <Text style={[{fontSize:12, paddingLeft:5, width: 50, textAlign:'right'}, this.props.style]} >{this.props.value < 1 ? (Math.round(100*this.props.value) * 0.01).toFixed(2) : this.props.value}</Text>
       </View>
     )
   }

@@ -48,6 +48,7 @@ export const Stacks = {
   firmwareTesting: function(props) : StackData {
     return {
       bottomTabs: {
+        id: 'bottomTabs',
         children: [
           {
             stack: {
@@ -58,6 +59,19 @@ export const Stacks = {
                 bottomTab: {
                   text: "Operations",
                   icon: require('../images/icons/switches.png'),
+                }
+              }
+            }
+          },
+          {
+            stack: {
+              children: [
+                { component: {name: "AdvancedConfig", passProps: props} },
+              ],
+              options: {
+                bottomTab: {
+                  text: "Advanced",
+                  icon: require('../images/icons/cog.png'),
                 }
               }
             }

@@ -30,6 +30,7 @@ import { migrate } from "./migration/StoreMigration";
 import { StoneAvailabilityTracker } from "../native/advertisements/StoneAvailabilityTracker";
 import { StoneDataSyncer } from "./StoneDataSyncer";
 import { insertInitialState, setDefaultSessionData } from "./InitialState";
+import { OverlayManager } from "./OverlayManager";
 
 
 class BackgroundProcessHandlerClass {
@@ -327,6 +328,7 @@ class BackgroundProcessHandlerClass {
     EncryptionManager.init();
     LogProcessor.init();
     MapProvider.init();
+    OverlayManager.init();
     Scheduler.init();
     StoneAvailabilityTracker.init();
     StoneManager.init();
