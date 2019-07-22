@@ -20,7 +20,7 @@ class FocusManagerClass {
     switchState: null,
     relayState: null,
     dimmerState: null,
-    dimmerThreshold: null,
+    dimmerCurrentThreshold: null,
     resetCounter: null,
     rssiAverage: null,
     referenceId: null,

@@ -29,6 +29,7 @@ import { NumericGetSet }     from "./editComponents/NumericGetSet";
 import { CollapsableBar }    from "./editComponents/Collapsable";
 
 import {styles, colors, NORMAL_ROW_SIZE, EXTRA_LARGE_ROW_SIZE} from '../styles'
+import { ButtonGetValue } from "./editComponents/ButtonGetValue";
 
 
 /**
@@ -105,6 +106,8 @@ export class EditableItem extends Component<any, any> {
     switch (this.props.type) {
       case 'button':
         return <ButtonBar barHeight={NORMAL_ROW_SIZE} {...this.props} />;
+      case 'buttonGetValue':
+        return <ButtonGetValue barHeight={NORMAL_ROW_SIZE} {...this.props} />;
       case 'checkbar':
         return <CheckBar barHeight={NORMAL_ROW_SIZE} {...this.props} />;
       case 'collapsable':

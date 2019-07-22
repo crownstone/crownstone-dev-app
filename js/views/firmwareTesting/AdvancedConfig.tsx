@@ -119,37 +119,6 @@ export class AdvancedConfig extends LiveComponent<{
   }
 
 
-  _setupCrownstone() {
-    if (this.state.bleState === BLE_STATE_BUSY) {
-      Toast.showWithGravity('  Bluetooth Busy!  ', Toast.SHORT, Toast.CENTER);
-      return;
-    }
-
-    clearTimeout(this.bleStateResetTimeout);
-    this.setState({setupActive: true, setupProgress:0, bleState: BLE_STATE_BUSY})
-
-    let helper = new SetupHelper(this.props.handle, "Dev Crownstone", this.props.item.serviceData.deviceType, "c2-crownstone");
-    let unsubscribeSetupEvents = [];
-    unsubscribeSetupEvents.push(core.eventBus.on("setupCancelled", (handle) => {
-      this.setState({setupActive: false, setupProgress: 0});
-    }));
-    unsubscribeSetupEvents.push(core.eventBus.on("setupInProgress", (data) => {
-      this.setState({setupProgress: data.progress/20});
-    }));
-    unsubscribeSetupEvents.push(core.eventBus.on("setupComplete", (handle) => {
-      this.setState({setupActive: false, setupProgress: 1});
-    }));
-    helper.claim(core.sessionMemory.usingSphereForSetup, false)
-      .then(() => {
-        unsubscribeSetupEvents.forEach((unsub) => { unsub() });
-        this.setState({bleState: BLE_STATE_READY, setupActive: false, setupProgress:0})
-      })
-      .catch((err) => {
-        this.setState({setupActive: false, setupProgress:0})
-        this.showBleError(err);
-      })
-  }
-
   showBleError(err) {
     clearTimeout(this.bleStateResetTimeout);
     this.setState({ bleState: err });
@@ -159,8 +128,6 @@ export class AdvancedConfig extends LiveComponent<{
   }
 
   _getItems(explanationColor) {
-    const store = core.store;
-    let state = store.getState();
     let items = [];
 
     if (this.state.mode === 'unverified') {
@@ -173,11 +140,14 @@ export class AdvancedConfig extends LiveComponent<{
         label: 'Switchcraft Threshold',
         type: 'numericGetSet',
         value: FocusManager.crownstoneState.switchCraftThreshold || null,
-        getCallback: (value) => {
-          Alert.alert("Not implemented getCallback!")
+        getCallback: () => {
+          this.bleAction(BluenetPromiseWrapper.getSwitchcraftThreshold, [], null, (result) => {
+            FocusManager.crownstoneState.switchCraftThreshold = result.data;
+            this.forceUpdate();
+          })
         },
         setCallback: (value) => {
-          Alert.alert("Not implemented setCallback!")
+          this.bleAction(BluenetPromiseWrapper.setSwitchcraftThreshold, [value])
         }
       });
 
@@ -185,11 +155,14 @@ export class AdvancedConfig extends LiveComponent<{
         label: 'Max Chip Temp',
         type: 'numericGetSet',
         value: FocusManager.crownstoneState.maxChipTemp || null,
-        getCallback: (value) => {
-          Alert.alert("Not implemented getCallback!")
+        getCallback: () => {
+          this.bleAction(BluenetPromiseWrapper.getMaxChipTemp, [], null, (result) => {
+            FocusManager.crownstoneState.maxChipTemp = result.data;
+            this.forceUpdate();
+          })
         },
         setCallback: (value) => {
-          Alert.alert("Not implemented setCallback!")
+          this.bleAction(BluenetPromiseWrapper.setMaxChipTemp, [value])
         }
       });
 
@@ -197,12 +170,15 @@ export class AdvancedConfig extends LiveComponent<{
       items.push({
         label: 'Dimmer Threshold',
         type: 'numericGetSet',
-        value: FocusManager.crownstoneState.dimmerThreshold || null,
-        getCallback: (value) => {
-          Alert.alert("Not implemented getCallback!")
+        value: FocusManager.crownstoneState.dimmerCurrentThreshold || null,
+        getCallback: () => {
+          this.bleAction(BluenetPromiseWrapper.getDimmerCurrentThreshold, [], null, (result) => {
+            FocusManager.crownstoneState.dimmerCurrentThreshold = result.data;
+            this.forceUpdate();
+          })
         },
         setCallback: (value) => {
-          Alert.alert("Not implemented setCallback!")
+          this.bleAction(BluenetPromiseWrapper.setDimmerCurrentThreshold, [value])
         }
       });
 
@@ -210,11 +186,14 @@ export class AdvancedConfig extends LiveComponent<{
         label: 'Dimmer Temp Up',
         type: 'numericGetSet',
         value: FocusManager.crownstoneState.dimmerTempUpThreshold || null,
-        getCallback: (value) => {
-          Alert.alert("Not implemented getCallback!")
+        getCallback: () => {
+          this.bleAction(BluenetPromiseWrapper.getDimmerTempUpThreshold, [], null, (result) => {
+            FocusManager.crownstoneState.dimmerTempUpThreshold = result.data;
+            this.forceUpdate();
+          })
         },
         setCallback: (value) => {
-          Alert.alert("Not implemented setCallback!")
+          this.bleAction(BluenetPromiseWrapper.setDimmerTempUpThreshold, [value])
         }
       });
 
@@ -222,11 +201,14 @@ export class AdvancedConfig extends LiveComponent<{
         label: 'Dimmer Temp Down',
         type: 'numericGetSet',
         value: FocusManager.crownstoneState.dimmerTempDownThreshold || null,
-        getCallback: (value) => {
-          Alert.alert("Not implemented getCallback!")
+        getCallback: () => {
+          this.bleAction(BluenetPromiseWrapper.getDimmerTempDownThreshold, [], null, (result) => {
+            FocusManager.crownstoneState.dimmerTempDownThreshold = result.data;
+            this.forceUpdate();
+          })
         },
         setCallback: (value) => {
-          Alert.alert("Not implemented setCallback!")
+          this.bleAction(BluenetPromiseWrapper.setDimmerTempDownThreshold, [value])
         }
       });
 
@@ -235,33 +217,42 @@ export class AdvancedConfig extends LiveComponent<{
         label: 'Voltage Zero',
         type: 'numericGetSet',
         value: FocusManager.crownstoneState.voltageZero || null,
-        getCallback: (value) => {
-          Alert.alert("Not implemented getCallback!")
+        getCallback: () => {
+          this.bleAction(BluenetPromiseWrapper.getVoltageZero, [], null, (result) => {
+            FocusManager.crownstoneState.voltageZero = result.data;
+            this.forceUpdate();
+          })
         },
         setCallback: (value) => {
-          Alert.alert("Not implemented setCallback!")
+          this.bleAction(BluenetPromiseWrapper.setVoltageZero, [value])
         }
       });
       items.push({
         label: 'Current Zero',
         type: 'numericGetSet',
         value: FocusManager.crownstoneState.currentZero || null,
-        getCallback: (value) => {
-          Alert.alert("Not implemented getCallback!")
+        getCallback: () => {
+          this.bleAction(BluenetPromiseWrapper.getCurrentZero, [], null, (result) => {
+            FocusManager.crownstoneState.currentZero = result.data;
+            this.forceUpdate();
+          })
         },
         setCallback: (value) => {
-          Alert.alert("Not implemented setCallback!")
+          this.bleAction(BluenetPromiseWrapper.setSwitchcraftThreshold, [value])
         }
       });
       items.push({
         label: 'Power Zero',
         type: 'numericGetSet',
         value: FocusManager.crownstoneState.powerZero || null,
-        getCallback: (value) => {
-          Alert.alert("Not implemented getCallback!")
+        getCallback: () => {
+          this.bleAction(BluenetPromiseWrapper.getPowerZero, [], null, (result) => {
+            FocusManager.crownstoneState.powerZero = result.data;
+            this.forceUpdate();
+          })
         },
         setCallback: (value) => {
-          Alert.alert("Not implemented setCallback!")
+          this.bleAction(BluenetPromiseWrapper.setPowerZero, [value])
         }
       });
 
@@ -271,22 +262,28 @@ export class AdvancedConfig extends LiveComponent<{
         label: 'Voltage Multiplier',
         type: 'numericGetSet',
         value: FocusManager.crownstoneState.voltageMultiplier || null,
-        getCallback: (value) => {
-          Alert.alert("Not implemented getCallback!")
+        getCallback: () => {
+          this.bleAction(BluenetPromiseWrapper.getVoltageMultiplier, [], null, (result) => {
+            FocusManager.crownstoneState.voltageMultiplier = result.data;
+            this.forceUpdate();
+          })
         },
         setCallback: (value) => {
-          Alert.alert("Not implemented setCallback!")
+          this.bleAction(BluenetPromiseWrapper.setVoltageMultiplier, [value])
         }
       });
       items.push({
         label: 'Current Multiplier',
         type: 'numericGetSet',
         value: FocusManager.crownstoneState.currentMultiplier || null,
-        getCallback: (value) => {
-          Alert.alert("Not implemented getCallback!")
+        getCallback: () => {
+          this.bleAction(BluenetPromiseWrapper.getCurrentMultiplier, [], null, (result) => {
+            FocusManager.crownstoneState.currentMultiplier = result.data;
+            this.forceUpdate();
+          })
         },
         setCallback: (value) => {
-          Alert.alert("Not implemented setCallback!")
+          this.bleAction(BluenetPromiseWrapper.setCurrentMultiplier, [value])
         }
       });
 
@@ -294,11 +291,27 @@ export class AdvancedConfig extends LiveComponent<{
 
       items.push({label:"DEV COMMANDS", type: 'explanation', color: explanationColor});
       items.push({
-        label: "Enable UART",
+        label: "Disable UART",
         type: 'button',
         style: {color:colors.menuTextSelected.hex},
         callback: () => {
-          Alert.alert("Not implemented yet!")
+          this.bleAction(BluenetPromiseWrapper.setUartState, [0], null);
+        }
+      });
+      items.push({
+        label: "UART RX ONLY",
+        type: 'button',
+        style: {color:colors.menuTextSelected.hex},
+        callback: () => {
+          this.bleAction(BluenetPromiseWrapper.setUartState, [1], null);
+        }
+      });
+      items.push({
+        label: "UART TX & RX",
+        type: 'button',
+        style: {color:colors.menuTextSelected.hex},
+        callback: () => {
+          this.bleAction(BluenetPromiseWrapper.setUartState, [3], null);
         }
       });
 
@@ -424,3 +437,5 @@ export class AdvancedConfig extends LiveComponent<{
     )
   }
 }
+
+

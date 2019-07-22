@@ -346,46 +346,44 @@ export class FirmwareTest extends LiveComponent<{
       });
     }
 
+    items.push({ label: "GET INFORMATION", type: 'explanation', color: explanationColor });
+
     items.push({
       label: "Get Firmware Version",
-      type: 'button',
-      style: {color:colors.menuTextSelected.hex},
-      callback: () => {
-        this.bleAction(BluenetPromiseWrapper.getFirmwareVersion, [this.props.handle], null, (firmwareVersion) => {
+      type: 'buttonGetValue',
+      value: FocusManager.crownstoneState.firmwareVersion,
+      getter: () => {
+        this.bleAction(BluenetPromiseWrapper.getFirmwareVersion, [], null, (firmwareVersion) => {
           FocusManager.crownstoneState.firmwareVersion = firmwareVersion.data;
           this.forceUpdate();
         })
       }
     });
-    items.push({ label: "Firmware: " + FocusManager.crownstoneState.firmwareVersion || " not requested yet.", type: 'explanation', below: true, color: explanationColor });
 
     items.push({
       label: "Get Hardware Version",
-      type: 'button',
-      style: {color:colors.menuTextSelected.hex},
-      callback: () => {
-        this.bleAction(BluenetPromiseWrapper.getHardwareVersion, [this.props.handle], null, (hardwareVersion) => {
+      type: 'buttonGetValue',
+      value: FocusManager.crownstoneState.hardwareVersion,
+      getter: () => {
+        this.bleAction(BluenetPromiseWrapper.getHardwareVersion, [], null, (hardwareVersion) => {
           FocusManager.crownstoneState.hardwareVersion = hardwareVersion.data;
           this.forceUpdate();
         })
       }
     });
-    items.push({ label: "Hardware: " + FocusManager.crownstoneState.hardwareVersion || " not requested yet.", type: 'explanation', below: true, color: explanationColor });
-
 
 
     items.push({
       label: "Get Reset Counter",
-      type: 'button',
-      style: {color:colors.menuTextSelected.hex},
-      callback: () => {
-        this.bleAction(BluenetPromiseWrapper.getResetCounter, [this.props.handle], null, (resetCounter) => {
+      type: 'buttonGetValue',
+      value: FocusManager.crownstoneState.resetCounter,
+      getter: () => {
+        this.bleAction(BluenetPromiseWrapper.getResetCounter, [], null, (resetCounter) => {
           FocusManager.crownstoneState.resetCounter = resetCounter.data;
           this.forceUpdate();
         })
       }
     });
-    items.push({ label: "Reset Count: " + FocusManager.crownstoneState.resetCounter || " not requested yet.", type: 'explanation', below: true, color: explanationColor });
 
     if (this.state.mode === "verified") {
       let state = core.store.getState();

@@ -1,12 +1,4 @@
 
-
-// declare module 'react-native-image-resizer' {
-//   const createResizedImage: any;
-//   export default createResizedImage;
-// }
-
-import { EventBusClass } from "../util/EventBus";
-
 declare const global: {
   __DEV__: boolean
 };

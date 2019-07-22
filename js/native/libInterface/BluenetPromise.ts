@@ -158,11 +158,27 @@ export const BluenetPromiseWrapper : BluenetPromiseWrapperProtocol = {
   switchDimmer:                   (state) => { return BluenetPromise('switchDimmer', state); }, // return type: void
 
   broadcastSwitch:                (referenceId, stoneId, switchState) => { return BluenetPromise('broadcastSwitch', referenceId, stoneId, switchState); },
+
+
+  getSwitchcraftThreshold:        ()        => { return BluenetPromise('getSwitchcraftThreshold')},
+  setSwitchcraftThreshold:        ( value ) => { return BluenetPromise('setSwitchcraftThreshold', value)},
+  getMaxChipTemp:                 ()        => { return BluenetPromise('getMaxChipTemp')},
+  setMaxChipTemp:                 ( value ) => { return BluenetPromise('setMaxChipTemp', value) },
+  getDimmerCurrentThreshold:      ()        => { return BluenetPromise('getDimmerCurrentThreshold') },
+  setDimmerCurrentThreshold:      ( value ) => { return BluenetPromise('setDimmerCurrentThreshold', value) },
+  getDimmerTempUpThreshold:       ()        => { return BluenetPromise('getDimmerTempUpThreshold')},
+  setDimmerTempUpThreshold:       ( value ) => { return BluenetPromise('setDimmerTempUpThreshold', value)},
+  getDimmerTempDownThreshold:     ()        => { return BluenetPromise('getDimmerTempDownThreshold')},
+  setDimmerTempDownThreshold:     ( value ) => { return BluenetPromise('setDimmerTempDownThreshold', value)},
+  getVoltageZero:                 ()        => { return BluenetPromise('getVoltageZero')},
+  setVoltageZero:                 ( value ) => { return BluenetPromise('setVoltageZero', value)},
+  getCurrentZero:                 ()        => { return BluenetPromise('getCurrentZero')},
+  setCurrentZero:                 ( value ) => { return BluenetPromise('setCurrentZero', value)},
+  getPowerZero:                   ()        => { return BluenetPromise('getPowerZero')},
+  setPowerZero:                   ( value ) => { return BluenetPromise('setPowerZero', value)},
+  getVoltageMultiplier:           ()        => { return BluenetPromise('getVoltageMultiplier')},
+  setVoltageMultiplier:           ( value ) => { return BluenetPromise('setVoltageMultiplier', value)},
+  getCurrentMultiplier:           ()        => { return BluenetPromise('getCurrentMultiplier')},
+  setCurrentMultiplier:           ( value ) => { return BluenetPromise('setCurrentMultiplier', value)},
+  setUartState:                   ( value ) => { return BluenetPromise('setUartState', value)},
 };
-
-
-
-
-
-
-
