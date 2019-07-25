@@ -88,10 +88,11 @@ export class AdvancedConfig extends LiveComponent<{
 
     let promise = null;
     this.setState({bleState: BLE_STATE_BUSY})
+    let state = core.store.getState();
 
     if (connect) {
       ConnectionManager.connectWillStart()
-      let proxy = BleUtil.getProxy(this.props.handle, FocusManager.crownstoneState.referenceId || core.sessionMemory.usingSphereForSetup);
+      let proxy = BleUtil.getProxy(this.props.handle, FocusManager.crownstoneState.referenceId || state.user.sphereUsedForSetup);
       promise = proxy.performPriority(action, props, PROXY_OPTIONS)
     }
     else {
@@ -147,7 +148,9 @@ export class AdvancedConfig extends LiveComponent<{
           })
         },
         setCallback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setSwitchcraftThreshold, [value])
+          this.bleAction(BluenetPromiseWrapper.setSwitchcraftThreshold, [Number(value)], null, () => {
+            core.eventBus.emit("hideNumericOverlay");
+          })
         }
       });
 
@@ -162,7 +165,9 @@ export class AdvancedConfig extends LiveComponent<{
           })
         },
         setCallback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setMaxChipTemp, [value])
+          this.bleAction(BluenetPromiseWrapper.setMaxChipTemp, [Number(value)], null, () => {
+            core.eventBus.emit("hideNumericOverlay");
+          })
         }
       });
 
@@ -178,7 +183,9 @@ export class AdvancedConfig extends LiveComponent<{
           })
         },
         setCallback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setDimmerCurrentThreshold, [value])
+          this.bleAction(BluenetPromiseWrapper.setDimmerCurrentThreshold, [Number(value)], null, () => {
+            core.eventBus.emit("hideNumericOverlay");
+          })
         }
       });
 
@@ -193,7 +200,9 @@ export class AdvancedConfig extends LiveComponent<{
           })
         },
         setCallback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setDimmerTempUpThreshold, [value])
+          this.bleAction(BluenetPromiseWrapper.setDimmerTempUpThreshold, [Number(value)], null, () => {
+            core.eventBus.emit("hideNumericOverlay");
+          })
         }
       });
 
@@ -208,7 +217,9 @@ export class AdvancedConfig extends LiveComponent<{
           })
         },
         setCallback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setDimmerTempDownThreshold, [value])
+          this.bleAction(BluenetPromiseWrapper.setDimmerTempDownThreshold, [Number(value)], null, () => {
+            core.eventBus.emit("hideNumericOverlay");
+          })
         }
       });
 
@@ -224,7 +235,9 @@ export class AdvancedConfig extends LiveComponent<{
           })
         },
         setCallback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setVoltageZero, [value])
+          this.bleAction(BluenetPromiseWrapper.setVoltageZero, [Number(value)], null, () => {
+            core.eventBus.emit("hideNumericOverlay");
+          })
         }
       });
       items.push({
@@ -238,7 +251,9 @@ export class AdvancedConfig extends LiveComponent<{
           })
         },
         setCallback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setSwitchcraftThreshold, [value])
+          this.bleAction(BluenetPromiseWrapper.setSwitchcraftThreshold, [Number(value)], null, () => {
+            core.eventBus.emit("hideNumericOverlay");
+          })
         }
       });
       items.push({
@@ -252,7 +267,9 @@ export class AdvancedConfig extends LiveComponent<{
           })
         },
         setCallback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setPowerZero, [value])
+          this.bleAction(BluenetPromiseWrapper.setPowerZero, [Number(value)], null, () => {
+            core.eventBus.emit("hideNumericOverlay");
+          })
         }
       });
 
@@ -261,6 +278,7 @@ export class AdvancedConfig extends LiveComponent<{
       items.push({
         label: 'Voltage Multiplier',
         type: 'numericGetSet',
+        digits: 6,
         value: FocusManager.crownstoneState.voltageMultiplier || null,
         getCallback: () => {
           this.bleAction(BluenetPromiseWrapper.getVoltageMultiplier, [], null, (result) => {
@@ -269,12 +287,15 @@ export class AdvancedConfig extends LiveComponent<{
           })
         },
         setCallback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setVoltageMultiplier, [value])
+          this.bleAction(BluenetPromiseWrapper.setVoltageMultiplier, [Number(value)], null, () => {
+            core.eventBus.emit("hideNumericOverlay");
+          })
         }
       });
       items.push({
         label: 'Current Multiplier',
         type: 'numericGetSet',
+        digits: 6,
         value: FocusManager.crownstoneState.currentMultiplier || null,
         getCallback: () => {
           this.bleAction(BluenetPromiseWrapper.getCurrentMultiplier, [], null, (result) => {
@@ -283,7 +304,9 @@ export class AdvancedConfig extends LiveComponent<{
           })
         },
         setCallback: (value) => {
-          this.bleAction(BluenetPromiseWrapper.setCurrentMultiplier, [value])
+          this.bleAction(BluenetPromiseWrapper.setCurrentMultiplier, [Number(value)], null, () => {
+            core.eventBus.emit("hideNumericOverlay");
+          })
         }
       });
 

@@ -19,6 +19,5 @@ export const core : core = {
     cameraSide: 'front',
     cacheBusterUniqueElement: Math.random(),
     developmentEnvironment: false,
-    usingSphereForSetup: null
   },
 };

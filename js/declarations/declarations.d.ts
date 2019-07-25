@@ -133,7 +133,6 @@ interface core {
     cameraSide: string,
     cacheBusterUniqueElement: number,
     developmentEnvironment: boolean,
-    usingSphereForSetup: string,
   }
 }
 

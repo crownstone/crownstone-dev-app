@@ -6,6 +6,8 @@ import { availableScreenHeight, colors, screenHeight, screenWidth, styles, topBa
 import { Background } from "../components/Background";
 import { Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { IconCircle } from "../components/IconCircle";
+import { SwitchBar } from "../components/editComponents/SwitchBar";
+import { BroadcastStateManager } from "../../backgroundProcesses/BroadcastStateManager";
 
 
 export class UserDataSpheres extends Component<any, any> {
@@ -37,7 +39,10 @@ export class UserDataSpheres extends Component<any, any> {
           sphere={spheres[sphereId]}
           sphereId={sphereId}
           callback={() => {
-            core.sessionMemory.usingSphereForSetup = sphereId; this.forceUpdate();
+            core.store.dispatch({type:"USER_UPDATE", data: {sphereUsedForSetup : sphereId}})
+            this.forceUpdate();
+            BroadcastStateManager._updateLocationState(sphereId);
+            BroadcastStateManager._reloadDevicePreferences();
           }}
         />
       );
@@ -63,6 +68,14 @@ export class UserDataSpheres extends Component<any, any> {
             <View style={{width:screenWidth, height:1, backgroundColor: colors.black.rgba(0.2)}} />
             { this.getSpheres() }
             <View style={{flex: 1, width:screenWidth, minHeight:30}} />
+            <SwitchBar
+              label={"Store setup Crownstones in Cloud"}
+              value={state.user.storeCrownstonesInCloud}
+              setActiveElement={() => {}}
+              callback={(newValue) => {
+                core.store.dispatch({type: "USER_UPDATE", data: {storeCrownstonesInCloud: newValue}});
+                this.forceUpdate();
+              }} />
           </View>
         </ScrollView>
       </Background>
@@ -74,7 +87,8 @@ export class UserDataSpheres extends Component<any, any> {
 
 function SphereEntry(props) {
   let backgroundColor = colors.white.rgba(0.5);
-  if (core.sessionMemory.usingSphereForSetup === props.sphereId) {
+  let state = core.store.getState();
+  if (state.user.sphereUsedForSetup === props.sphereId) {
     backgroundColor = colors.menuTextSelected.rgba(0.7)
   }
   let height = 70;

@@ -20,6 +20,7 @@ import { NavigationUtil } from "../../util/NavigationUtil";
 import { Stacks } from "../../router/Stacks";
 import { Bluenet } from "../../native/libInterface/Bluenet";
 import { FocusManager } from "../../backgroundProcesses/FocusManager";
+import { BroadcastStateManager } from "../../backgroundProcesses/BroadcastStateManager";
 
 let smallText : TextStyle = { fontSize:12, paddingLeft:10, paddingRight:10};
 
@@ -231,11 +232,11 @@ export class StoneSelector extends LiveComponent<any, any> {
           let rssi = data.rssi;
 
           if (this.state.tracking === handle) {
-            tracker = { handle: handle, rssi: rssi, type: type, data: data }
+            tracker = { handle: handle, rssi: rssi, type: type, data: data, sphereId: data.referenceId || null }
             return;
           }
           if (rssi < 0 && rssi >= this.state.rssiFilter || this.state.showHandleFilter) {
-            stack.push({ handle: handle, rssi: rssi, type: type, data: data });
+            stack.push({ handle: handle, rssi: rssi, type: type, data: data, sphereId: data.referenceId || null });
           }
         })
       }
@@ -262,6 +263,10 @@ export class StoneSelector extends LiveComponent<any, any> {
           track={() => { this.setState({tracking: this.state.tracking === item.handle ? null : item.handle })}}
           callback={() => {
             FocusManager.setHandleToFocusOn(item.handle, item.type, item.data.name);
+            if (item.sphereId) {
+              BroadcastStateManager._updateLocationState(item.sphereId);
+              BroadcastStateManager._reloadDevicePreferences();
+            }
             NavigationUtil.setRoot( Stacks.firmwareTesting({ handle: item.handle, item: item.data, mode: item.type, name: item.data.name }));
           }}
         />
@@ -342,8 +347,8 @@ export class StoneSelector extends LiveComponent<any, any> {
           hidden={true}
           visible={!this.state.showHandleFilter}
           height={50}
-          style={{flexDirection:'row', width:screenWidth, height:50,...styles.centered, borderBottomColor: colors.black.rgba(0.2), borderBottomWidth:1}}>
-          <Text style={{...smallText, width:50}}>Rssi:</Text>
+          style={{flexDirection:'row', width:screenWidth, height: 50,...styles.centered, borderBottomColor: colors.black.rgba(0.2), borderBottomWidth:1}}>
+          <Text style={{...smallText, width: 50}}>Rssi:</Text>
           <Slider
             style={{ width: screenWidth - 120, height: 40 }}
             minimumValue={-100}

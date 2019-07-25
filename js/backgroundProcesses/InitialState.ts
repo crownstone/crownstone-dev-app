@@ -1,6 +1,7 @@
 import { xUtil } from "../util/StandAloneUtil";
 import { KEY_TYPES } from "../Enums";
 import { core } from "../core";
+import { BroadcastStateManager } from "./BroadcastStateManager";
 
 
 export const TESTING_SPHERE_NAME = "Dev app Sphere"
@@ -20,14 +21,11 @@ export const insertInitialState = function() {
     return;
   }
 
-
   let actions = [];
-
   let sphereId = xUtil.getUUID();
   actions.push({type:"USER_LOG_IN", data: {
     isNew: false,
   }})
-
 
   actions.push({type:"ADD_SPHERE", sphereId: sphereId, data: {
     name: TESTING_SPHERE_NAME,
@@ -62,7 +60,12 @@ export const setDefaultSessionData = function() {
   let spheres = state.spheres;
   Object.keys(spheres).forEach((sphereId) => {
     if (spheres[sphereId].config.name === TESTING_SPHERE_NAME) {
-      core.sessionMemory.usingSphereForSetup = sphereId;
+      if (state.user.sphereUsedForSetup === null) {
+        core.store.dispatch({type:"USER_UPDATE", data: {sphereUsedForSetup : sphereId}})
+      }
+
+      BroadcastStateManager._updateLocationState(sphereId);
+      BroadcastStateManager._reloadDevicePreferences();
     }
   })
 

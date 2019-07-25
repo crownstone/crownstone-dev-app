@@ -26,6 +26,9 @@ let defaultSettings = {
   uploadDeviceDetails: true,
   uploadActivityLogs: true,
   updatedAt: 1,
+
+  storeCrownstonesInCloud: false,
+  sphereUsedForSetup: null,
 };
 
 // userReducer
@@ -102,6 +105,9 @@ export default (state = defaultSettings, action : any = {}) => {
         newState.uploadHighFrequencyPowerUsage = update(action.data.uploadHighFrequencyPowerUsage,    newState.uploadHighFrequencyPowerUsage);
         newState.uploadDeviceDetails    = update(action.data.uploadDeviceDetails, newState.uploadDeviceDetails);
         newState.uploadActivityLogs     = update(action.data.uploadActivityLogs, newState.uploadActivityLogs);
+
+        newState.sphereUsedForSetup          = update(action.data.sphereUsedForSetup, newState.sphereUsedForSetup);
+        newState.storeCrownstonesInCloud     = update(action.data.storeCrownstonesInCloud, newState.storeCrownstonesInCloud);
 
         if (action.type === 'USER_UPDATE') {
           newState.updatedAt = getTime(action.data.updatedAt);

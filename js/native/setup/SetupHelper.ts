@@ -12,6 +12,7 @@ import {StoneUtil} from "../../util/StoneUtil";
 import { KEY_TYPES, STONE_TYPES } from "../../Enums";
 import { core } from "../../core";
 import { xUtil } from "../../util/StandAloneUtil";
+import { TESTING_SPHERE_NAME } from "../../backgroundProcesses/InitialState";
 
 
 const networkError = 'network_error';
@@ -174,9 +175,14 @@ export class SetupHelper {
             core.eventBus.emit("setupCancelled", this.handle);
 
             // clean up in the cloud after failed setup.
-            // if (this.stoneIdInCloud !== undefined && this.stoneWasAlreadyInCloud === false) {
-            //   CLOUD.forSphere(sphereId).deleteStone(this.stoneIdInCloud).catch((err) => {LOGe.info("COULD NOT CLEAN UP AFTER SETUP", err)})
-            // }
+            let state = core.store.getState();
+            if (state.user.storeCrownstonesInCloud === true && state.spheres[state.user.sphereUsedForSetup].config.name !== TESTING_SPHERE_NAME) {
+              if (this.stoneIdInCloud !== undefined && this.stoneWasAlreadyInCloud === false) {
+                CLOUD.forSphere(sphereId).deleteStone(this.stoneIdInCloud).catch((err) => {
+                  LOGe.info("COULD NOT CLEAN UP AFTER SETUP", err)
+                })
+              }
+            }
 
             if (err == "INVALID_SESSION_DATA" && silent === false) {
               Alert.alert("Encryption might be off","Error: INVALID_SESSION_DATA, which usually means encryption in this Crownstone is turned off. This app requires encryption to be on.",[{text:'OK'}]);
@@ -201,14 +207,85 @@ export class SetupHelper {
   }
 
   getMeshDeviceKeyFromCloud(sphereId, stoneId) {
-    return Promise.resolve("aStoneKeyForMesh")
+    let state = core.store.getState();
+    if (state.user.storeCrownstonesInCloud === true && state.spheres[state.user.sphereUsedForSetup].config.name !== TESTING_SPHERE_NAME) {
+      return CLOUD.getKeys(sphereId, stoneId, false)
+        .then((keyData) => {
+          if (keyData.length !== 1) { throw {code: networkError, message: "Invalid key data count"}; }
+
+          let cloudStoneId = MapProvider.local2cloudMap.stones[stoneId]   || stoneId;
+          if (keyData[0] && keyData[0].stoneKeys && keyData[0].stoneKeys[cloudStoneId]) {
+            let stoneKeys = keyData[0].stoneKeys[cloudStoneId];
+            for ( let i = 0; i < stoneKeys.length; i++) {
+              let stoneKey = stoneKeys[i];
+              if (stoneKey.keyType === KEY_TYPES.MESH_DEVICE_KEY && stoneKey.ttl === 0) {
+                return stoneKey.key;
+              }
+            }
+          }
+
+          throw {code: networkError, message: "Invalid key data"};
+        })
+    }
+    else {
+      return Promise.resolve("aStoneKeyForMesh")
+    }
+
   }
 
 
   registerInCloud(sphereId) {
-    return new Promise((resolve, reject) => {
-      resolve({id:xUtil.getUUID(), uid:200, major: 10543, minor: 10029});
-    })
+    let state = core.store.getState();
+    if (state.user.storeCrownstonesInCloud === true && state.spheres[state.user.sphereUsedForSetup].config.name !== TESTING_SPHERE_NAME) {
+      return new Promise((resolve, reject) => {
+        const processFailure = (err?) => {
+          if (err.message && err.message === 'Network request failed') {
+            reject({ code: networkError, message: err.message });
+          } else {
+            reject({ code: networkError, message: err });
+            // let defaultAction = () => { reject(networkError); };
+            // Alert.alert("Whoops!", "Something went wrong in the Cloud. Please try again later.",[{ text:"OK", onPress: defaultAction }], { onDismiss: defaultAction });
+          }
+        };
+
+        CLOUD.forSphere(sphereId).createStone({
+          sphereId: sphereId,
+          address: this.macAddress,
+          type: this.type,
+          name: this.name,
+          icon: this.icon,
+          firmwareVersion: this.firmwareVersion,
+          hardwareVersion: this.hardwareVersion,
+          tapToToggle: this.type == STONE_TYPES.plug
+        }, false)
+          .then(resolve)
+          .catch((err) => {
+            if (err.status === 422) {
+              CLOUD.forSphere(sphereId).findStone(this.macAddress)
+                .then((foundCrownstones) => {
+                  if (foundCrownstones.length === 1) {
+                    this.stoneWasAlreadyInCloud = true;
+                    resolve(foundCrownstones[0]);
+                  } else {
+                    processFailure();
+                  }
+                })
+                .catch((err) => {
+                  LOGe.info("SetupHelper: CONNECTION ERROR on find:", err);
+                  processFailure(err);
+                })
+            } else {
+              LOGe.info("SetupHelper: CONNECTION ERROR on register:", err);
+              processFailure(err);
+            }
+          });
+      })
+    }
+    else {
+      return new Promise((resolve, reject) => {
+        resolve({id:xUtil.getUUID(), uid:200, major: 10543, minor: 10029});
+      })
+    }
   }
 
   setupCrownstone(sphereId, meshDeviceKey) {

@@ -4,7 +4,7 @@ import { ScrollView, View, Text, ActivityIndicator, Alert, TouchableOpacity, Tou
 import { core } from "../../core";
 import Toast from 'react-native-same-toast';
 import { ListEditableItems } from "../components/ListEditableItems";
-import { colors, styles } from "../styles";
+import { colors, screenWidth, styles } from "../styles";
 import { SetupHelper } from "../../native/setup/SetupHelper";
 import { TopBarUtil } from "../../util/TopBarUtil";
 import { AnimatedBackground } from "../components/animated/AnimatedBackground";
@@ -15,12 +15,10 @@ import { SlideInView } from "../components/animated/SlideInView";
 import { BluenetPromise, BluenetPromiseWrapper } from "../../native/libInterface/BluenetPromise";
 import { Stacks } from "../../router/Stacks";
 import { NavigationUtil } from "../../util/NavigationUtil";
-import { xUtil } from "../../util/StandAloneUtil";
-import { LargeExplanation } from "../components/editComponents/LargeExplanation";
-import { LOG, LOGe } from "../../logging/Log";
 import { BlePromiseManager } from "../../logic/BlePromiseManager";
 import { ConnectionManager } from "../../backgroundProcesses/ConnectionManager";
 import { FocusManager } from "../../backgroundProcesses/FocusManager";
+import { BroadcastStateManager } from "../../backgroundProcesses/BroadcastStateManager";
 
 
 const BLE_STATE_READY = "ready";
@@ -88,10 +86,11 @@ export class FirmwareTest extends LiveComponent<{
 
     let promise = null;
     this.setState({bleState: BLE_STATE_BUSY})
+    let state = core.store.getState();
 
     if (connect) {
       ConnectionManager.connectWillStart()
-      let proxy = BleUtil.getProxy(this.props.handle, FocusManager.crownstoneState.referenceId || core.sessionMemory.usingSphereForSetup);
+      let proxy = BleUtil.getProxy(this.props.handle, FocusManager.crownstoneState.referenceId || state.user.sphereUsedForSetup);
       promise = proxy.performPriority(action, props, PROXY_OPTIONS)
     }
     else {
@@ -125,6 +124,8 @@ export class FirmwareTest extends LiveComponent<{
       return;
     }
 
+    let state = core.store.getState();
+
     clearTimeout(this.bleStateResetTimeout);
     this.setState({setupActive: true, setupProgress:0, bleState: BLE_STATE_BUSY})
 
@@ -139,10 +140,12 @@ export class FirmwareTest extends LiveComponent<{
     unsubscribeSetupEvents.push(core.eventBus.on("setupComplete", (handle) => {
       this.setState({setupActive: false, setupProgress: 1});
     }));
-    helper.claim(core.sessionMemory.usingSphereForSetup, false)
+    helper.claim(state.user.sphereUsedForSetup, false)
       .then(() => {
         unsubscribeSetupEvents.forEach((unsub) => { unsub() });
         this.setState({bleState: BLE_STATE_READY, setupActive: false, setupProgress:0})
+        BroadcastStateManager._updateLocationState(state.user.sphereUsedForSetup);
+        BroadcastStateManager._reloadDevicePreferences();
       })
       .catch((err) => {
         this.setState({setupActive: false, setupProgress:0})
@@ -175,7 +178,7 @@ export class FirmwareTest extends LiveComponent<{
           this._setupCrownstone();
         }
       });
-      items.push({label:"Using sphere: \"" + state.spheres[core.sessionMemory.usingSphereForSetup].config.name + "\" for setup.", type: 'explanation', below: true, color: explanationColor});
+      items.push({label:"Using sphere: \"" + state.spheres[state.user.sphereUsedForSetup].config.name + "\" for setup.", type: 'explanation', below: true, color: explanationColor});
     }
 
     if (this.state.mode === "verified") {
@@ -446,7 +449,7 @@ export class FirmwareTest extends LiveComponent<{
 
     return (
       <AnimatedBackground image={backgroundImage} >
-        <View style={{flexDirection: 'row', paddingTop: 10, paddingBottom: 10, backgroundColor: colors.white.rgba(0.8), borderBottomWidth: 1, borderBottomColor: colors.black.rgba(0.2)}}>
+        <View style={{flexDirection: 'row', paddingTop: 10, paddingBottom: 10, width:screenWidth, backgroundColor: colors.white.rgba(0.8), borderBottomWidth: 1, borderBottomColor: colors.black.rgba(0.2)}}>
           <View style={{flex:1}} />
           <StatusIndicator
             label={'BLE'}
@@ -539,8 +542,10 @@ export function StatusIndicator(props) {
   }
 
 
+
+
   return (
-    <TouchableOpacity style={{alignItems:'center', width: 70}} onPress={() => { if (props.callback) { props.callback(); } }}>
+    <TouchableOpacity style={{alignItems:'center'}} onPress={() => { if (props.callback) { props.callback(); } }}>
       {pending ?
         <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: backgroundColor, ...styles.centered }}>
           <ActivityIndicator size={1} color={colors.white.hex} />

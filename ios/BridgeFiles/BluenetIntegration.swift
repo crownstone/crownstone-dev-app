@@ -982,7 +982,7 @@ open class BluenetJS: RCTEventEmitter {
     wrapForBluenet("getSwitchcraftThreshold", callback, GLOBAL_BLUENET.bluenet.config.getSwitchcraftThreshold())
   }
   
-  @objc func setSwitchcraftThreshold(_ value: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setSwitchcraftThreshold(_ value: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setSwitchcraftThreshold", callback, GLOBAL_BLUENET.bluenet.config.setSwitchcraftThreshold(value: value.floatValue))
   }
   
@@ -990,7 +990,7 @@ open class BluenetJS: RCTEventEmitter {
     wrapForBluenet("getMaxChipTemp", callback, GLOBAL_BLUENET.bluenet.config.getMaxChipTemp())
   }
   
-  @objc func setMaxChipTemp(_ value: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setMaxChipTemp(_ value: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setMaxChipTemp", callback, GLOBAL_BLUENET.bluenet.config.setMaxChipTemp(value: value.int8Value))
   }
   
@@ -998,7 +998,7 @@ open class BluenetJS: RCTEventEmitter {
     wrapForBluenet("getDimmerCurrentThreshold", callback, GLOBAL_BLUENET.bluenet.config.getDimmerCurrentThreshold())
   }
   
-  @objc func setDimmerCurrentThreshold(_ value: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setDimmerCurrentThreshold(_ value: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setDimmerCurrentThreshold", callback, GLOBAL_BLUENET.bluenet.config.setDimmerCurrentThreshold(value: value.uint16Value))
   }
   
@@ -1006,7 +1006,7 @@ open class BluenetJS: RCTEventEmitter {
     wrapForBluenet("getDimmerTempUpThreshold", callback, GLOBAL_BLUENET.bluenet.config.getDimmerTempUpThreshold())
   }
   
-  @objc func setDimmerTempUpThreshold(_ value: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setDimmerTempUpThreshold(_ value: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setDimmerTempUpThreshold", callback, GLOBAL_BLUENET.bluenet.config.setDimmerTempUpThreshold(value: value.floatValue))
   }
   
@@ -1014,7 +1014,7 @@ open class BluenetJS: RCTEventEmitter {
     wrapForBluenet("getDimmerTempDownThreshold", callback, GLOBAL_BLUENET.bluenet.config.getDimmerTempDownThreshold())
   }
   
-  @objc func setDimmerTempDownThreshold(_ value: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setDimmerTempDownThreshold(_ value: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setDimmerTempDownThreshold", callback, GLOBAL_BLUENET.bluenet.config.setDimmerTempDownThreshold(value: value.floatValue))
   }
   
@@ -1022,7 +1022,7 @@ open class BluenetJS: RCTEventEmitter {
     wrapForBluenet("getVoltageZero", callback, GLOBAL_BLUENET.bluenet.config.getVoltageZero())
   }
   
-  @objc func setVoltageZero(_ value: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setVoltageZero(_ value: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setVoltageZero", callback, GLOBAL_BLUENET.bluenet.config.setVoltageZero(value: value.int32Value))
   }
   
@@ -1030,7 +1030,7 @@ open class BluenetJS: RCTEventEmitter {
     wrapForBluenet("getCurrentZero", callback, GLOBAL_BLUENET.bluenet.config.getCurrentZero())
   }
   
-  @objc func setCurrentZero(_ value: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setCurrentZero(_ value: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setCurrentZero", callback, GLOBAL_BLUENET.bluenet.config.setCurrentZero(value: value.int32Value))
   }
   
@@ -1038,7 +1038,7 @@ open class BluenetJS: RCTEventEmitter {
     wrapForBluenet("getPowerZero", callback, GLOBAL_BLUENET.bluenet.config.getPowerZero())
   }
   
-  @objc func setPowerZero(_ value: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setPowerZero(_ value: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setPowerZero", callback, GLOBAL_BLUENET.bluenet.config.setPowerZero(value: value.int32Value))
   }
   
@@ -1046,7 +1046,7 @@ open class BluenetJS: RCTEventEmitter {
     wrapForBluenet("getVoltageMultiplier", callback, GLOBAL_BLUENET.bluenet.config.getVoltageMultiplier())
   }
   
-  @objc func setVoltageMultiplier(_ value: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setVoltageMultiplier(_ value: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setVoltageMultiplier", callback, GLOBAL_BLUENET.bluenet.config.setVoltageMultiplier(value: value.floatValue))
   }
   
@@ -1054,11 +1054,11 @@ open class BluenetJS: RCTEventEmitter {
      wrapForBluenet("getCurrentMultiplier", callback, GLOBAL_BLUENET.bluenet.config.getCurrentMultiplier())
   }
   
-  @objc func setCurrentMultiplier(_ value: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setCurrentMultiplier(_ value: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setCurrentMultiplier", callback, GLOBAL_BLUENET.bluenet.config.setCurrentMultiplier(value: value.floatValue))
   }
   
-  @objc func setUartState(_ state: NSNumber, _ callback: @escaping RCTResponseSenderBlock) {
+  @objc func setUartState(_ state: NSNumber, callback: @escaping RCTResponseSenderBlock) {
     wrapForBluenet("setUartState", callback, GLOBAL_BLUENET.bluenet.config.setUartState(state))
   }
 }
