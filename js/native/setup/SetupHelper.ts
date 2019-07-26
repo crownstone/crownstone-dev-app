@@ -283,7 +283,7 @@ export class SetupHelper {
     }
     else {
       return new Promise((resolve, reject) => {
-        resolve({id:xUtil.getUUID(), uid:200, major: 10543, minor: 10029});
+        resolve({id:xUtil.getUUID(), uid:Math.floor(Math.random()*255), major: Math.floor(Math.random()*60000), minor: Math.floor(Math.random()*60000)});
       })
     }
   }

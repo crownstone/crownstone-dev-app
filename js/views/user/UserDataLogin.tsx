@@ -37,6 +37,7 @@ import { core } from "../../core";
 import { createNewSphere } from "../../util/CreateSphere";
 import { TopBarUtil } from "../../util/TopBarUtil";
 import { insertInitialState } from "../../backgroundProcesses/InitialState";
+import { SwitchBar } from "../components/editComponents/SwitchBar";
 
 
 export class UserDataLogin extends Component<any, any> {
@@ -227,6 +228,8 @@ export class UserDataLogin extends Component<any, any> {
     if (screenHeight < 500) {
       factor = 0.15
     }
+
+    let state = core.store.getState();
     return (
       <Background image={core.background.light} keyboardAvoid={true}>
         <ScrollView keyboardShouldPersistTaps="never" style={{width: screenWidth, height:screenHeight - topBarHeight}}>
@@ -270,6 +273,14 @@ export class UserDataLogin extends Component<any, any> {
             <View style={{flex: 1, width:screenWidth, minHeight:20}} />
             <LoginButton loginCallback={() => {this.attemptLogin()}} />
             <View style={{flex: 4, width:screenWidth, minHeight:30}} />
+            <SwitchBar
+              label={"Fast Phone"}
+              value={state.user.fastPhone}
+              setActiveElement={() => {}}
+              callback={(newValue) => {
+                core.store.dispatch({type: "USER_UPDATE", data: {fastPhone: newValue}});
+                this.forceUpdate();
+              }} />
           </View>
         </ScrollView>
       </Background>

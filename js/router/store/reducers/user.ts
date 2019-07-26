@@ -29,6 +29,7 @@ let defaultSettings = {
 
   storeCrownstonesInCloud: false,
   sphereUsedForSetup: null,
+  fastPhone: false,
 };
 
 // userReducer
@@ -108,6 +109,7 @@ export default (state = defaultSettings, action : any = {}) => {
 
         newState.sphereUsedForSetup          = update(action.data.sphereUsedForSetup, newState.sphereUsedForSetup);
         newState.storeCrownstonesInCloud     = update(action.data.storeCrownstonesInCloud, newState.storeCrownstonesInCloud);
+        newState.fastPhone                   = update(action.data.fastPhone, newState.fastPhone);
 
         if (action.type === 'USER_UPDATE') {
           newState.updatedAt = getTime(action.data.updatedAt);

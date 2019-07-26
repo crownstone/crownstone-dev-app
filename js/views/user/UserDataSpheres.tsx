@@ -76,6 +76,14 @@ export class UserDataSpheres extends Component<any, any> {
                 core.store.dispatch({type: "USER_UPDATE", data: {storeCrownstonesInCloud: newValue}});
                 this.forceUpdate();
               }} />
+            <SwitchBar
+              label={"Fast Phone"}
+              value={state.user.fastPhone}
+              setActiveElement={() => {}}
+              callback={(newValue) => {
+                core.store.dispatch({type: "USER_UPDATE", data: {fastPhone: newValue}});
+                this.forceUpdate();
+              }} />
           </View>
         </ScrollView>
       </Background>

@@ -1,6 +1,7 @@
 import { NativeBus } from "../native/libInterface/NativeBus";
 import { xUtil } from "../util/StandAloneUtil";
 import { core } from "../core";
+import { Platform } from "react-native";
 
 class FocusManagerClass {
 
@@ -34,6 +35,7 @@ class FocusManagerClass {
     voltageZero: null,
     currentZero: null,
     powerZero: null,
+    macAddress: null,
     voltageMultiplier: null,
     currentMultiplier: null,
   }
@@ -143,6 +145,7 @@ class FocusManagerClass {
     }
 
     if (type !== this.crownstoneMode) {
+      this.crownstoneMode = type;
       updateRequired = true;
     }
 
@@ -153,7 +156,6 @@ class FocusManagerClass {
     if (data.serviceData.stateOfExternalCrownstone === true) { return; }
 
 
-
     let updateCheck = (field, source) => {
       if (this.updateFreeze[field] !== true) {
         if (this.crownstoneState[field] !== source) {
@@ -161,6 +163,10 @@ class FocusManagerClass {
           this.crownstoneState[field] = source;
         }
       }
+    }
+
+    if (Platform.OS === 'android') {
+      updateCheck('macAddress', data.handle);
     }
 
     // these are available in both the errorData as well as the normal service Data
@@ -179,6 +185,8 @@ class FocusManagerClass {
     }
 
     this.name = data.name;
+
+    if (data.serviceData.errorMode === true) { return; }
 
     updateCheck('error', data.serviceData.hasError);
     updateCheck('dimmingEnabled', data.serviceData.dimmingAllowed);

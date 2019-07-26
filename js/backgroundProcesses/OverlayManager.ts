@@ -9,7 +9,6 @@ class OverlayManagerClass {
   init() {
     if (this._initialized === false) {
       this._initialized = true;
-      console.log("OVERLAYED")
       core.eventBus.on('showAicoreTimeCustomizationOverlay', (data) => { NavigationUtil.showOverlay('AicoreTimeCustomizationOverlay',{data: data}); })
 
       // ble status popup

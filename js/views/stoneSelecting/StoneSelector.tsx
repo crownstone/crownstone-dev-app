@@ -94,7 +94,7 @@ export class StoneSelector extends LiveComponent<any, any> {
         this.update(data, 'unverified');
       }))
       this.unsubscribe.push(NativeBus.on(NativeBus.topics.setupAdvertisement, (data: crownstoneAdvertisement) => {
-        console.log("SETUP PACKET", data.handle, data.name, data.rssi)
+        // console.log("SETUP PACKET", data.handle, data.name, data.rssi)
         this.update(data, 'setup');
       }))
       this.unsubscribe.push(NativeBus.on(NativeBus.topics.dfuAdvertisement, (data : crownstoneAdvertisement) => {
@@ -139,13 +139,17 @@ export class StoneSelector extends LiveComponent<any, any> {
   }
 
   setRefreshTimeout() {
+    let state = core.store.getState();
+
+    clearTimeout(this.refreshTimeout);
     this.refreshTimeout = setTimeout(() => {
       if (this.doUpdate) {
         this.doUpdate = false;
-        this.forceUpdate();
+        this.forceUpdate(() => { this.doUpdate = false; this.setRefreshTimeout() });
+        return;
       }
       this.setRefreshTimeout()
-    }, 300);
+    }, state.user.fastPhone ? 300 : 1000);
   }
 
   componentWillUnmount(): void {
@@ -180,7 +184,7 @@ export class StoneSelector extends LiveComponent<any, any> {
         this.data[type][data.handle].rssi = previousRssi;
       }
       else {
-        this.data[type][data.handle].rssi = Math.round(0.5*newRssi + 0.5*previousRssi);;
+        this.data[type][data.handle].rssi = Math.round(0.5*newRssi + 0.5*previousRssi);
       }
     }
 
@@ -396,7 +400,7 @@ function FilterButton(props) {
 }
 
 function CrownstoneEntry(props) {
-  let backgroundColor = colors.white.rgba(0.5);
+  let backgroundColor = colors.white.hex;
   let opacity = 0.65;
   let height = 55;
   if (props.tracking) {
@@ -412,7 +416,7 @@ function CrownstoneEntry(props) {
       let state = core.store.getState();
       sphere = state.spheres[props.item.data.referenceId] || null;
       break;
-    case 'unverified': backgroundColor = colors.white.rgba(opacity); break;
+    case 'unverified': backgroundColor = colors.white.hex; break;
     case 'dfu': backgroundColor = colors.purple.rgba(opacity); break;
   }
 
