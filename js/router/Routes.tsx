@@ -12,6 +12,7 @@ import {
 } from "../views/components/topbar/TopbarButton";
 import { CancelButton } from "../views/components/topbar/CancelButton";
 import { OverlayManager } from "../backgroundProcesses/OverlayManager";
+import { NavigationUtil } from "../util/NavigationUtil";
 
 let viewsLoaded = false;
 
@@ -60,8 +61,5 @@ Navigation.events().registerAppLaunchedListener(() => {
     }
   });
 
-  Navigation.setRoot({
-    root: Stacks.initial()
-  });
-
+  NavigationUtil.setRoot(Stacks.initial())
 });

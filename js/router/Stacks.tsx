@@ -13,6 +13,7 @@ export const Stacks = {
   searchingForCrownstones: function() : StackData {
     return {
       bottomTabs: {
+        id: 'bottomTabs',
         children: [
           {
             stack: {

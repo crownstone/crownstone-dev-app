@@ -101,6 +101,14 @@ export class NumericOverlay extends Component<any, any> {
                 placeholder={ "set value" }
                 value={this.state.value}
                 callback={(newValue) => {
+                  if (newValue.indexOf(",") !== -1) {
+                    if (newValue.indexOf(".") !== -1) {
+                      newValue = newValue.replace(",","");
+                    }
+                    else {
+                      newValue = newValue.replace(",",".");
+                    }
+                  }
                   this.setState({value: newValue});
                 }}
               />
