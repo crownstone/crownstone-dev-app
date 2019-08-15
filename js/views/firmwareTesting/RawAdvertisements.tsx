@@ -7,6 +7,7 @@ import { TopBarUtil } from "../../util/TopBarUtil";
 import { AnimatedBackground } from "../components/animated/AnimatedBackground";
 import { NativeBus } from "../../native/libInterface/NativeBus";
 import { xUtil } from "../../util/StandAloneUtil";
+import { FocusManager } from "../../backgroundProcesses/FocusManager";
 
 
 
@@ -29,7 +30,7 @@ export class RawAdvertisements extends LiveComponent<{
   constructor(props) {
     super(props);
 
-    this.state = { advertisement: "" }
+    this.state = { advertisement: "",stateOfExternalCrownstone: false }
 
     this.startScanning();
   }
@@ -99,7 +100,7 @@ export class RawAdvertisements extends LiveComponent<{
 
     let strData = xUtil.stringify(data);
     if (this.state.advertisement !== strData) {
-      this.setState({advertisement: strData})
+      this.setState({advertisement: strData, stateOfExternalCrownstone: data.serviceData.stateOfExternalCrownstone})
     }
 
   }
@@ -108,7 +109,7 @@ export class RawAdvertisements extends LiveComponent<{
     let backgroundImage = core.background.light;
     let explanationColor = colors.black.rgba(0.9);
 
-    switch (this.state.mode) {
+    switch (FocusManager.crownstoneMode ) {
       case "setup":
         explanationColor = colors.white.hex;
         backgroundImage = require('../../images/backgrounds/blueBackground2.png');
@@ -119,13 +120,15 @@ export class RawAdvertisements extends LiveComponent<{
       case "unverified":
         backgroundImage = core.background.menu;
         break;
-
+      case "dfu":
+        backgroundImage = require('../../images/backgrounds/upgradeBackground.png');
+        break;
     }
 
     return (
       <AnimatedBackground image={backgroundImage} >
         <ScrollView>
-          <Text style={{fontSize: 13, backgroundColor: colors.white.rgba(0.6)}}>{this.state.advertisement}</Text>
+          <Text style={{fontSize: 13, backgroundColor: this.state.stateOfExternalCrownstone ? colors.green.rgba(0.6) : colors.white.rgba(0.6)}}>{this.state.advertisement}</Text>
         </ScrollView>
       </AnimatedBackground>
     )

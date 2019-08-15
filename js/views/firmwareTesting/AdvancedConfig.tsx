@@ -21,7 +21,7 @@ import { LOG, LOGe } from "../../logging/Log";
 import { BlePromiseManager } from "../../logic/BlePromiseManager";
 import { ConnectionManager } from "../../backgroundProcesses/ConnectionManager";
 import { FocusManager } from "../../backgroundProcesses/FocusManager";
-import { StatusIndicator } from "./FirmwareTest";
+import { BleStatusBar, StatusIndicator } from "./FirmwareTest";
 
 
 const BLE_STATE_READY = "ready";
@@ -130,13 +130,14 @@ export class AdvancedConfig extends LiveComponent<{
 
   _getItems(explanationColor) {
     let items = [];
-
+    items.push({label:"CONFIGS", type: 'explanation', color: explanationColor});
     if (this.state.mode === 'unverified') {
       items.push({label:"Disabled for unverified Crownstone.", type: 'info'});
     }
+    else if (FocusManager.crownstoneMode === 'dfu' ) {
+      items.push({label:"Disabled for Crownstone in DFU mode.", type: 'info'});
+    }
     else {
-      items.push({label:"CONFIGS", type: 'explanation', color: explanationColor});
-
       items.push({
         label: 'Switchcraft Threshold',
         type: 'numericGetSet',
@@ -361,7 +362,7 @@ export class AdvancedConfig extends LiveComponent<{
     let backgroundImage = core.background.light;
     let explanationColor = colors.black.rgba(0.9);
 
-    switch (this.state.mode) {
+    switch (FocusManager.crownstoneMode ) {
       case "setup":
         explanationColor = colors.white.hex;
         backgroundImage = require('../../images/backgrounds/blueBackground2.png');
@@ -371,6 +372,9 @@ export class AdvancedConfig extends LiveComponent<{
         break;
       case "unverified":
         backgroundImage = core.background.menu;
+        break;
+      case "dfu":
+        backgroundImage = require('../../images/backgrounds/upgradeBackground.png');
         break;
     }
 
@@ -388,66 +392,7 @@ export class AdvancedConfig extends LiveComponent<{
 
     return (
       <AnimatedBackground image={backgroundImage} >
-        <View style={{flexDirection: 'row', paddingTop: 10, paddingBottom: 10, backgroundColor: colors.white.rgba(0.8), borderBottomWidth: 1, borderBottomColor: colors.black.rgba(0.2)}}>
-          <View style={{flex:1}} />
-          <StatusIndicator
-            label={'BLE'}
-            icon={'ios-bluetooth'}
-            pending={this.state.bleState === BLE_STATE_BUSY}
-            backgroundColor={this.state.bleState === BLE_STATE_READY || this.state.bleState === BLE_STATE_BUSY ? colors.green.hex : colors.red.hex}
-            callback={() => {
-              triggerErrorMessage();
-            }}
-          />
-          <View style={{flex:1}} />
-          <StatusIndicator
-            label={'HW Errors'}
-            icon={'ios-bug'}
-            disabled={this.state.mode === 'unverified'}
-            pending={FocusManager.crownstoneState.error === null}
-            backgroundColor={FocusManager.crownstoneState.error ? (FocusManager.crownstoneState.errorDetails === null ? colors.csOrange.hex : colors.red.hex) : colors.csBlueDark.hex}
-            callback={() => {
-              if (FocusManager.crownstoneState.error) {
-                if (FocusManager.crownstoneState.errorDetails) {
-                  Alert.alert("Errors:", JSON.stringify(FocusManager.crownstoneState.errorDetails, undefined, 2))
-                } else {
-                  Alert.alert("Errors:", "No details yet...")
-                }
-              }
-              else {
-                Alert.alert("No Hardware Errors.");
-              }
-            }}
-          />
-          <View style={{flex:1}} />
-          <StatusIndicator
-            label={'Temp'}
-            icon={'md-thermometer'}
-            disabled={this.state.mode === 'unverified'}
-            pending={FocusManager.crownstoneState.temperature === null}
-            value={FocusManager.crownstoneState.temperature + " C"}
-            backgroundColor={colors.green.blend(colors.red, (FocusManager.crownstoneState.temperature - 25) / 50).hex}
-          />
-          <View style={{flex:1}} />
-          <StatusIndicator
-            label={'Power'}
-            icon={'ios-flash'}
-            disabled={this.state.mode === 'unverified'}
-            pending={FocusManager.crownstoneState.powerUsage === null}
-            value={FocusManager.crownstoneState.powerUsage + " W"}
-            backgroundColor={colors.green.blend(colors.red, FocusManager.crownstoneState.powerUsage / 4000).hex}
-          />
-          <View style={{flex:1}} />
-          <StatusIndicator
-            label={'Dimmer'}
-            icon={'ios-sunny'}
-            iconSize={32}
-            disabled={this.state.mode === 'unverified'}
-            pending={FocusManager.crownstoneState.dimmingAvailable === null}
-            backgroundColor={FocusManager.crownstoneState.dimmingAvailable ? colors.green.hex : colors.csBlueDark.hex}
-          />
-          <View style={{flex:1}} />
-        </View>
+        <BleStatusBar bleState={this.state.bleState} />
         <SlideInView hidden={true} height={50} visible={this.state.bleState !== BLE_STATE_READY && this.state.bleState !== BLE_STATE_BUSY}>
           <TouchableOpacity onPress={triggerErrorMessage} style={{paddingLeft: 10, paddingRight: 10, backgroundColor: colors.red.hex, borderBottomWidth: 1, borderBottomColor: colors.black.rgba(0.2), height: 50, ...styles.centered}}>
             <Text style={{fontSize: 15, fontWeight: 'bold', color: colors.white.hex}}>Error during BLE command.</Text>

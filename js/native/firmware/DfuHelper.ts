@@ -80,7 +80,7 @@ export class DfuHelper {
         LOGd.info("DfuHelper: DFU event:", data);
         progressCallback(data.progress*0.01);
       });
-
+      console.log("HERE", crownstoneMode)
 
       let updateProcess = () => {
         LOG.info("DfuHelper: performing bootloader update.");

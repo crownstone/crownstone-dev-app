@@ -93,6 +93,19 @@ export const Stacks = {
           {
             stack: {
               children: [
+                { component: {name: "DFU", passProps: props} },
+              ],
+              options: {
+                bottomTab: {
+                  text: "DFU",
+                  icon: require('../images/icons/dfu.png'),
+                }
+              }
+            }
+          },
+          {
+            stack: {
+              children: [
                 { component: {name: "UserData"} },
               ],
               options: {

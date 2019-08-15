@@ -287,7 +287,7 @@ class BackgroundProcessHandlerClass {
         })
         .then((reply) => {
           LOG.info("BackgroundProcessHandler: Verified User.", reply);
-          CLOUD.sync(core.store, true).catch(() => {})
+          // CLOUD.sync(core.store, true).catch(() => {})
         })
         .catch((err) => {
           LOG.info("BackgroundProcessHandler: COULD NOT VERIFY USER -- ERROR", err);
@@ -332,7 +332,6 @@ class BackgroundProcessHandlerClass {
     Scheduler.init();
     StoneAvailabilityTracker.init();
     StoneManager.init();
-    StoneDataSyncer.init();
     SetupStateHandler.init();
   }
 }

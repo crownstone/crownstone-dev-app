@@ -25,6 +25,7 @@ import { Logout }            from "../views/startupViews/Logout";
 import { RawAdvertisements } from "../views/firmwareTesting/RawAdvertisements";
 import { AdvancedConfig }    from "../views/firmwareTesting/AdvancedConfig";
 import { NumericOverlay }    from "../views/overlays/NumericOverlay";
+import { DFU }               from "../views/firmwareTesting/DFU";
 import { LocationPermissionOverlay } from "../views/overlays/LocationPermissionOverlay";
 
 
@@ -33,6 +34,7 @@ export const Views = {
   Logout:                    Logout,
   FirmwareTest:              FirmwareTest,
   AdvancedConfig:            AdvancedConfig,
+  DFU:                       DFU,
 
   DfuIntroduction:           DfuIntroduction,
   DfuScanning:               DfuScanning,

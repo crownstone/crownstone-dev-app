@@ -1,6 +1,6 @@
 import { LiveComponent } from "../LiveComponent";
 import * as React from "react";
-import { ScrollView, View, Text, ActivityIndicator, Alert, TouchableOpacity, Platform } from "react-native";
+import { ScrollView, View, Text, ActivityIndicator, Alert, TouchableOpacity, Platform, StatusBar } from "react-native";
 import { core } from "../../core";
 import Toast from 'react-native-same-toast';
 import { ListEditableItems } from "../components/ListEditableItems";
@@ -195,8 +195,7 @@ export class FirmwareTest extends LiveComponent<{
       });
       items.push({label:"Using sphere: \"" + state.spheres[state.user.sphereUsedForSetup].config.name + "\" for setup.", type: 'explanation', below: true, color: explanationColor});
     }
-
-    if (FocusManager.crownstoneMode === "verified") {
+    else if (FocusManager.crownstoneMode === "verified") {
       items.push({
         label: "Reboot Crownstone",
         type: 'button',
@@ -214,8 +213,7 @@ export class FirmwareTest extends LiveComponent<{
       });
       items.push({label:"Put your Crownstone back in setup mode.", type: 'explanation', below: true, color: explanationColor});
     }
-
-    if (FocusManager.crownstoneMode === 'unverified') {
+    else if (FocusManager.crownstoneMode === 'unverified') {
       items.push({
         label: "Recover",
         type: 'button',
@@ -225,12 +223,25 @@ export class FirmwareTest extends LiveComponent<{
       });
       items.push({label:"Recovery is possible in the first 30 seconds after power on.", type: 'explanation', below: true, color: explanationColor});
     }
+    else if (FocusManager.crownstoneMode === 'dfu' ) {
+      items.push({
+        label: "Back to normal mode",
+        type: 'button',
+        callback: () => {
+          this.bleAction(BluenetPromiseWrapper.bootloaderToNormalMode, [this.props.handle], null, () => {}, false);
+        }
+      });
+      items.push({label:"Put your Crownstone back into app mode.", type: 'explanation', below: true, color: explanationColor});
+    }
 
 
 
     items.push({label:"CONTROL", type: 'explanation', below: false, color: explanationColor, alreadyPadded:true});
     if (FocusManager.crownstoneMode === 'unverified') {
       items.push({label:"Disabled for unverified Crownstone.", type: 'info'});
+    }
+    else if (FocusManager.crownstoneMode === 'dfu' ) {
+      items.push({label:"Disabled for Crownstone in DFU mode.", type: 'info'});
     }
     else {
       if (FocusManager.crownstoneState.dimmingEnabled) {
@@ -321,8 +332,11 @@ export class FirmwareTest extends LiveComponent<{
     }
 
     items.push({label:"CONFIG", type: 'explanation', below: false, color: explanationColor});
-    if (FocusManager.crownstoneMode === 'unverified') {
+    if (FocusManager.crownstoneMode === 'unverified' ) {
       items.push({label:"Disabled for unverified Crownstone.", type: 'info'});
+    }
+    else if (FocusManager.crownstoneMode === 'dfu' ) {
+      items.push({label:"Disabled for Crownstone in DFU mode.", type: 'info'});
     }
     else {
       items.push({
@@ -394,63 +408,85 @@ export class FirmwareTest extends LiveComponent<{
         }
       });
     }
-
-    items.push({
-      label: "Firmware Version",
-      type: 'buttonGetValue',
-      value: FocusManager.crownstoneState.firmwareVersion,
-      getter: () => {
-        this.bleAction(BluenetPromiseWrapper.getFirmwareVersion, [], null, (firmwareVersion) => {
-          FocusManager.crownstoneState.firmwareVersion = firmwareVersion.data;
-          this.forceUpdate();
-        })
-      }
-    });
-
-    items.push({
-      label: "Hardware Version",
-      type: 'buttonGetValue',
-      value: FocusManager.crownstoneState.hardwareVersion,
-      getter: () => {
-        this.bleAction(BluenetPromiseWrapper.getHardwareVersion, [], null, (hardwareVersion) => {
-          FocusManager.crownstoneState.hardwareVersion = hardwareVersion.data;
-          this.forceUpdate();
-        })
-      }
-    });
-
-
-    items.push({
-      label: "Reset Counter",
-      type: 'buttonGetValue',
-      value: FocusManager.crownstoneState.resetCounter,
-      getter: () => {
-        this.bleAction(BluenetPromiseWrapper.getResetCounter, [], null, (resetCounter) => {
-          FocusManager.crownstoneState.resetCounter = resetCounter.data;
-          this.forceUpdate();
-        })
-      }
-    });
-
-    if (FocusManager.crownstoneMode === "verified") {
-      let state = core.store.getState();
-      let sphere = state.spheres[FocusManager.crownstoneState.referenceId];
-      if (sphere) {
-        items.push({ label: "In Sphere " + sphere.config.name, type: 'explanation', below: false, color: explanationColor });
-      }
-    }
-
-    if (FocusManager.crownstoneMode  !== 'unverified') {
+    if (FocusManager.crownstoneMode === 'dfu' ) {
       items.push({
-        label: "Go in DFU mode",
-        type: 'button',
-        style: {color:colors.red.hex},
-        callback: () => {
-          this.bleAction(BluenetPromiseWrapper.putInDFU, [this.props.handle], null, () => {
-            NavigationUtil.setRoot( Stacks.searchingForCrownstones() )
+        label: "Bootloader Version",
+        type: 'buttonGetValue',
+        value: FocusManager.crownstoneState.bootloaderVersion,
+        getter: () => {
+          this.bleAction(BluenetPromiseWrapper.getBootloaderVersion, [], null, (firmwareVersion) => {
+            FocusManager.crownstoneState.bootloaderVersion = firmwareVersion.data;
+            this.forceUpdate();
           })
         }
       });
+    }
+    else {
+      items.push({
+        label: "Firmware Version",
+        type: 'buttonGetValue',
+        value: FocusManager.crownstoneState.firmwareVersion,
+        getter: () => {
+          this.bleAction(BluenetPromiseWrapper.getFirmwareVersion, [], null, (firmwareVersion) => {
+            FocusManager.crownstoneState.firmwareVersion = firmwareVersion.data;
+            this.forceUpdate();
+          })
+        }
+      });
+    }
+
+
+    if (FocusManager.crownstoneMode !== 'dfu' ) {
+      items.push({
+        label: "Hardware Version",
+        type: 'buttonGetValue',
+        value: FocusManager.crownstoneState.hardwareVersion,
+        getter: () => {
+          this.bleAction(BluenetPromiseWrapper.getHardwareVersion, [], null, (hardwareVersion) => {
+            FocusManager.crownstoneState.hardwareVersion = hardwareVersion.data;
+            this.forceUpdate();
+          })
+        }
+      });
+
+
+      items.push({
+        label: "Reset Counter",
+        type: 'buttonGetValue',
+        value: FocusManager.crownstoneState.resetCounter,
+        getter: () => {
+          this.bleAction(BluenetPromiseWrapper.getResetCounter, [], null, (resetCounter) => {
+            FocusManager.crownstoneState.resetCounter = resetCounter.data;
+            this.forceUpdate();
+          })
+        }
+      });
+
+      if (FocusManager.crownstoneMode === "verified") {
+        let state = core.store.getState();
+        let sphere = state.spheres[FocusManager.crownstoneState.referenceId];
+        if (sphere) {
+          items.push({
+            label: "In Sphere " + sphere.config.name,
+            type: 'explanation',
+            below: false,
+            color: explanationColor
+          });
+        }
+      }
+
+      if (FocusManager.crownstoneMode !== 'unverified') {
+        items.push({
+          label: "Go in DFU mode",
+          type: 'button',
+          style: { color: colors.red.hex },
+          callback: () => {
+            this.bleAction(BluenetPromiseWrapper.putInDFU, [this.props.handle], null, () => {
+            })
+          }
+        });
+      }
+
     }
     items.push({type: 'spacer'});
     items.push({type: 'spacer'});
@@ -476,6 +512,9 @@ export class FirmwareTest extends LiveComponent<{
       case "unverified":
         backgroundImage = core.background.menu;
         break;
+      case "dfu":
+        backgroundImage = require('../../images/backgrounds/upgradeBackground.png');
+        break;
     }
 
     if (FocusManager.crownstoneState.error) {
@@ -483,76 +522,15 @@ export class FirmwareTest extends LiveComponent<{
       explanationColor = colors.white.rgba(0.5);
     }
 
-
     let triggerErrorMessage = () => {
       if (!(this.state.bleState === BLE_STATE_READY || this.state.bleState === BLE_STATE_BUSY)) {
         Alert.alert("BLE Error:", JSON.stringify(this.state.bleState, undefined, 2))
       }
     }
 
-
     return (
       <AnimatedBackground image={backgroundImage} >
-        <View style={{flexDirection: 'row', paddingTop: 10, paddingBottom: 10, width:screenWidth, backgroundColor: colors.white.rgba(0.8), borderBottomWidth: 1, borderBottomColor: colors.black.rgba(0.2)}}>
-          <View style={{flex:1}} />
-          <StatusIndicator
-            label={'BLE'}
-            icon={'ios-bluetooth'}
-            pending={this.state.bleState === BLE_STATE_BUSY}
-            backgroundColor={this.state.bleState === BLE_STATE_READY || this.state.bleState === BLE_STATE_BUSY ? colors.green.hex : colors.red.hex}
-            callback={() => {
-              triggerErrorMessage();
-            }}
-          />
-          <View style={{flex:1}} />
-          <StatusIndicator
-            label={'HW Errors'}
-            icon={'ios-bug'}
-            disabled={FocusManager.crownstoneMode === 'unverified'}
-            pending={FocusManager.crownstoneState.error === null}
-            backgroundColor={FocusManager.crownstoneState.error ? (FocusManager.crownstoneState.errorDetails === null ? colors.csOrange.hex : colors.red.hex) : colors.csBlueDark.hex}
-            callback={() => {
-              if (FocusManager.crownstoneState.error) {
-                if (FocusManager.crownstoneState.errorDetails) {
-                  Alert.alert("Errors:", JSON.stringify(FocusManager.crownstoneState.errorDetails, undefined, 2))
-                } else {
-                  Alert.alert("Errors:", "No details yet...")
-                }
-              }
-              else {
-                Alert.alert("No Hardware Errors.");
-              }
-            }}
-          />
-          <View style={{flex:1}} />
-          <StatusIndicator
-            label={'Temp'}
-            icon={'md-thermometer'}
-            disabled={FocusManager.crownstoneMode === 'unverified'}
-            pending={FocusManager.crownstoneState.temperature === null}
-            value={FocusManager.crownstoneState.temperature + " C"}
-            backgroundColor={colors.green.blend(colors.red, (FocusManager.crownstoneState.temperature - 40) / 40).hex}
-          />
-          <View style={{flex:1}} />
-          <StatusIndicator
-            label={'Power'}
-            icon={'ios-flash'}
-            disabled={FocusManager.crownstoneMode === 'unverified'}
-            pending={FocusManager.crownstoneState.powerUsage === null}
-            value={FocusManager.crownstoneState.powerUsage + " W"}
-            backgroundColor={colors.green.blend(colors.red, FocusManager.crownstoneState.powerUsage / 4000).hex}
-          />
-          <View style={{flex:1}} />
-          <StatusIndicator
-            label={'Dimmer'}
-            icon={'ios-sunny'}
-            iconSize={32}
-            disabled={FocusManager.crownstoneMode === 'unverified'}
-            pending={FocusManager.crownstoneState.dimmingAvailable === null}
-            backgroundColor={FocusManager.crownstoneState.dimmingAvailable ? colors.green.hex : colors.csBlueDark.hex}
-          />
-          <View style={{flex:1}} />
-        </View>
+        <BleStatusBar bleState={this.state.bleState} />
         <SlideInView hidden={true} height={50} visible={this.state.bleState !== BLE_STATE_READY && this.state.bleState !== BLE_STATE_BUSY}>
           <TouchableOpacity onPress={triggerErrorMessage} style={{paddingLeft: 10, paddingRight: 10, backgroundColor: colors.red.hex, borderBottomWidth: 1, borderBottomColor: colors.black.rgba(0.2), height: 50, ...styles.centered}}>
             <Text style={{fontSize: 15, fontWeight: 'bold', color: colors.white.hex}}>Error during BLE command.</Text>
@@ -612,3 +590,76 @@ export function StatusIndicator(props) {
 
 }
 
+
+export function BleStatusBar(props : {bleState}) {
+
+  let triggerErrorMessage = () => {
+    if (!(props.bleState === BLE_STATE_READY || props.bleState === BLE_STATE_BUSY)) {
+      Alert.alert("BLE Error:", JSON.stringify(props.bleState, undefined, 2))
+    }
+  }
+
+  return (
+    <View style={{flexDirection: 'row', paddingTop: 10, paddingBottom: 10, width:screenWidth, backgroundColor: colors.white.rgba(0.8), borderBottomWidth: 1, borderBottomColor: colors.black.rgba(0.2)}}>
+      <View style={{flex:1}} />
+      <StatusIndicator
+        label={'BLE'}
+        icon={'ios-bluetooth'}
+        pending={props.bleState === BLE_STATE_BUSY}
+        backgroundColor={props.bleState === BLE_STATE_READY || props.bleState === BLE_STATE_BUSY ? colors.green.hex : colors.red.hex}
+        callback={() => {
+          triggerErrorMessage();
+        }}
+      />
+      <View style={{flex:1}} />
+      <StatusIndicator
+        label={'HW Errors'}
+        icon={'ios-bug'}
+        disabled={FocusManager.crownstoneMode === 'unverified'}
+        pending={FocusManager.crownstoneState.error === null}
+        backgroundColor={FocusManager.crownstoneState.error ? (FocusManager.crownstoneState.errorDetails === null ? colors.csOrange.hex : colors.red.hex) : colors.csBlueDark.hex}
+        callback={() => {
+          if (FocusManager.crownstoneState.error) {
+            if (FocusManager.crownstoneState.errorDetails) {
+              Alert.alert("Errors:", JSON.stringify(FocusManager.crownstoneState.errorDetails, undefined, 2))
+            } else {
+              Alert.alert("Errors:", "No details yet...")
+            }
+          }
+          else {
+            Alert.alert("No Hardware Errors.");
+          }
+        }}
+      />
+      <View style={{flex:1}} />
+      <StatusIndicator
+        label={'Temp'}
+        icon={'md-thermometer'}
+        disabled={FocusManager.crownstoneMode === 'unverified'}
+        pending={FocusManager.crownstoneState.temperature === null}
+        value={FocusManager.crownstoneState.temperature + " C"}
+        backgroundColor={colors.green.blend(colors.red, (FocusManager.crownstoneState.temperature - 40) / 40).hex}
+      />
+      <View style={{flex:1}} />
+      <StatusIndicator
+        label={'Power'}
+        icon={'ios-flash'}
+        disabled={FocusManager.crownstoneMode === 'unverified'}
+        pending={FocusManager.crownstoneState.powerUsage === null}
+        value={FocusManager.crownstoneState.powerUsage + " W"}
+        backgroundColor={colors.green.blend(colors.red, FocusManager.crownstoneState.powerUsage / 4000).hex}
+      />
+      <View style={{flex:1}} />
+      <StatusIndicator
+        label={'Dimmer'}
+        icon={'ios-sunny'}
+        iconSize={32}
+        disabled={FocusManager.crownstoneMode === 'unverified'}
+        pending={FocusManager.crownstoneState.dimmingAvailable === null}
+        backgroundColor={FocusManager.crownstoneState.dimmingAvailable ? colors.green.hex : colors.csBlueDark.hex}
+      />
+      <View style={{flex:1}} />
+    </View>
+  )
+
+}

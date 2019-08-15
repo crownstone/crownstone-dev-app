@@ -101,9 +101,11 @@ class FocusManagerClass {
           this.update(data, 'setup');
         }
       }))
-      // this.unsubscribe.push(NativeBus.on(NativeBus.topics.dfuAdvertisement, (data : crownstoneAdvertisement) => {
-      //
-      // }))
+      this.unsubscribe.push(NativeBus.on(NativeBus.topics.dfuAdvertisement, (data : crownstoneAdvertisement) => {
+        if (data.handle === this.handle) {
+          this.update(data, 'dfu');
+        }
+      }))
     }
   }
 
@@ -150,10 +152,20 @@ class FocusManagerClass {
     }
 
 
-    if (type === "unverified") { return; }
+    if (type === "unverified" || type === "dfu") {
+      if (updateRequired) {
+        core.eventBus.emit("FOCUS_UPDATE");
+      }
+      return;
+    }
 
     // check if this is a mesh message or a direct one
-    if (data.serviceData.stateOfExternalCrownstone === true) { return; }
+    if (data.serviceData.stateOfExternalCrownstone === true) {
+      if (updateRequired) {
+        core.eventBus.emit("FOCUS_UPDATE");
+      }
+      return;
+    }
 
 
     let updateCheck = (field, source) => {

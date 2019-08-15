@@ -2,12 +2,23 @@ import * as React from 'react'; import { Component } from 'react';
 
 
 import { core } from "../../core";
-import { availableScreenHeight, colors, screenHeight, screenWidth, styles, topBarHeight } from "../styles";
+import {
+  availableScreenHeight,
+  colors,
+  NORMAL_ROW_SIZE,
+  screenHeight,
+  screenWidth,
+  styles,
+  topBarHeight
+} from "../styles";
 import { Background } from "../components/Background";
-import { Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { IconCircle } from "../components/IconCircle";
 import { SwitchBar } from "../components/editComponents/SwitchBar";
 import { BroadcastStateManager } from "../../backgroundProcesses/BroadcastStateManager";
+import { IconButton } from "../components/IconButton";
+import { ButtonBar } from "../components/editComponents/ButtonBar";
+import { CLOUD } from "../../cloud/cloudAPI";
 
 
 export class UserDataSpheres extends Component<any, any> {
@@ -68,6 +79,35 @@ export class UserDataSpheres extends Component<any, any> {
             <View style={{width:screenWidth, height:1, backgroundColor: colors.black.rgba(0.2)}} />
             { this.getSpheres() }
             <View style={{flex: 1, width:screenWidth, minHeight:30}} />
+
+            <View style={{width:screenWidth, height:1, backgroundColor: colors.lightGray.rgba(0.4)}} />
+            <ButtonBar
+              barHeight={NORMAL_ROW_SIZE}
+              style={{color: colors.black.hex}}
+              label={"Sync"}
+              icon={<IconButton name="md-cloud-download" size={22} button={true} color="#fff" buttonStyle={{backgroundColor:colors.csBlue.hex}} />}
+              callback={() => {
+                if (CLOUD.__currentlySyncing === false) {
+                  core.eventBus.emit("showLoading", "Syncing...");
+                  CLOUD.sync(core.store, true)
+                    .then(() => { core.eventBus.emit("showLoading","Done"); setTimeout(() => { core.eventBus.emit("hideLoading");}, 500); })
+                    .catch((err) => {
+                      core.eventBus.emit("hideLoading");
+                      Alert.alert(
+                      "Error during sync",
+                      err && err.message && JSON.stringify(err),
+                      [{text:"OK"}])
+                    })
+                }
+                else {
+                  Alert.alert(
+                    "Sync already in progress",
+                    "Try again later",
+                    [{text:"OK"}]
+                  );
+                }
+              }} />
+            <View style={{width:screenWidth, height:1, backgroundColor: colors.lightGray.rgba(0.4)}} />
             <SwitchBar
               label={"Store setup Crownstones in Cloud"}
               value={state.user.storeCrownstonesInCloud}
@@ -76,6 +116,7 @@ export class UserDataSpheres extends Component<any, any> {
                 core.store.dispatch({type: "USER_UPDATE", data: {storeCrownstonesInCloud: newValue}});
                 this.forceUpdate();
               }} />
+            <View style={{width:screenWidth, height:1, backgroundColor: colors.lightGray.rgba(0.4)}} />
             <SwitchBar
               label={"Fast Phone"}
               value={state.user.fastPhone}
@@ -84,6 +125,7 @@ export class UserDataSpheres extends Component<any, any> {
                 core.store.dispatch({type: "USER_UPDATE", data: {fastPhone: newValue}});
                 this.forceUpdate();
               }} />
+            <View style={{width:screenWidth, height:1, backgroundColor: colors.lightGray.rgba(0.4)}} />
           </View>
         </ScrollView>
       </Background>

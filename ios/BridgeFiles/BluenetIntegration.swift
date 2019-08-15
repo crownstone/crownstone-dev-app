@@ -14,7 +14,6 @@ import BluenetLib
 import BluenetShared
 import BluenetBasicLocalization
 
-import WatchConnectivity
 
 @objc(BluenetJS)
 open class BluenetJS: RCTEventEmitter {
@@ -177,7 +176,6 @@ open class BluenetJS: RCTEventEmitter {
   @objc func setKeySets(_ keySets: [NSDictionary], callback: RCTResponseSenderBlock) {
     LOGGER.info("BluenetBridge: Called setKeySets")
     var sets : [KeySet] = []
-    var watchSets = [String: [String: String?]]()
     
     if let castSets = keySets as? [NSDictionary] {
       for keyData in castSets {
@@ -192,9 +190,6 @@ open class BluenetJS: RCTEventEmitter {
           return
         }
         sets.append(KeySet(adminKey: adminKey, memberKey: memberKey, basicKey: basicKey, localizationKey: localizationKey, serviceDataKey: serviceDataKey, referenceId: referenceId!))
-        
-        watchSets[referenceId!] = ["adminKey": adminKey, "memberKey": memberKey, "basicKey": basicKey, "localizationKey": localizationKey, "serviceDataKey": serviceDataKey]
-        
       }
     }
     else {
@@ -203,8 +198,6 @@ open class BluenetJS: RCTEventEmitter {
     }
     
     GLOBAL_BLUENET.bluenet.loadKeysets(encryptionEnabled: true, keySets: sets)
-    
-    GLOBAL_BLUENET.watchStateManager.loadState("keysets", watchSets)
     
     callback([["error" : false]])
   }
@@ -905,8 +898,7 @@ open class BluenetJS: RCTEventEmitter {
   }
   
   @objc func setCrownstoneNames(_ names: NSDictionary) {
-    print("BluenetBridge: Called SETTING setCrownstoneNames")
-    GLOBAL_BLUENET.watchStateManager.loadState("crownstoneNames", names)
+
   }
   
   

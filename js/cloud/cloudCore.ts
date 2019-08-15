@@ -167,7 +167,6 @@ export function downloadFile(url, targetPath, callbacks) {
     // download the file.
     FileUtil.safeDeleteFile(tempPath)
       .then(() => {
-        console.log("TEMP PATH CLEARED", tempPath)
         return  RNFS.downloadFile({
           fromUrl: url,
           toFile: tempPath,
@@ -187,7 +186,6 @@ export function downloadFile(url, targetPath, callbacks) {
             .catch((err) => { LOGe.cloud("CloudCore:DownloadFile:",downloadSessionId," Could not delete file", tempPath, ' err:', err); });
         }
         else {
-          console.log("DOWNLOAD SUCCESS MOVING ", tempPath, targetPath);
           FileUtil.safeMoveFile(tempPath, targetPath)
             .then((toPath) => {
               // if we have renamed the file, we resolve the promise so we can store the changed filename.

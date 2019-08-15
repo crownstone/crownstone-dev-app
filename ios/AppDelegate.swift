@@ -28,7 +28,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let rootViewController = UIViewController()
         GLOBAL_BLUENET.initController(viewController: rootViewController)
         
-        RNSplashScreen.show()
+//        RNSplashScreen.show()
         
         return true
     }
