@@ -21,7 +21,7 @@ class ConnectionManagerClass {
 
   disconnect() {
     clearTimeout(this.bleConnectionTimeout);
-    BluenetPromiseWrapper.phoneDisconnect()
+    return BluenetPromiseWrapper.phoneDisconnect()
       .catch(() => { return BluenetPromiseWrapper.disconnectCommand()})
 
   }

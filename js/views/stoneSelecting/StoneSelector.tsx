@@ -4,11 +4,9 @@ import * as React from "react";
 import {
   Text,
   TextStyle,
-  ViewStyle,
-  TouchableOpacity,
   ScrollView,
   RefreshControl,
-  View, TextInput, Platform
+  View, TextInput, Platform, TouchableOpacity
 } from "react-native";
 import { TopBarUtil } from "../../util/TopBarUtil";
 import { NativeBus } from "../../native/libInterface/NativeBus";
@@ -21,29 +19,11 @@ import { Stacks } from "../../router/Stacks";
 import { Bluenet } from "../../native/libInterface/Bluenet";
 import { FocusManager } from "../../backgroundProcesses/FocusManager";
 import { BroadcastStateManager } from "../../backgroundProcesses/BroadcastStateManager";
-import { Component } from "react";
+import { SelectionFilter } from "./SelectionFilter";
+import { CrownstoneEntry, FilterButton, filterState } from "./SelectionComponents";
+import { BatchOps } from "./BatchOps";
 
 let smallText : TextStyle = { fontSize:12, paddingLeft:10, paddingRight:10};
-
-const filterState = {
-  plug: true,
-  builtin: true,
-  guidestone: true,
-  builtinOne: true,
-  crownstoneUSB: true,
-  verified: true,
-  unverified: true,
-  setup: true,
-  dfu: true,
-}
-
-
-function updateFilterState(state) {
-  let keys = Object.keys(filterState);
-  for (let i = 0; i < keys.length; i++) {
-    filterState[keys[i]] = state[keys[i]];
-  }
-}
 
 
 export class StoneSelector extends LiveComponent<any, any> {
@@ -62,23 +42,17 @@ export class StoneSelector extends LiveComponent<any, any> {
   };
   scanning = false;
   HFTimeout;
+  trackingItems = [];
+
 
   constructor(props) {
     super(props);
 
     this.state = {
       rssiFilter: -100,
-      plug:          filterState.plug,
-      builtin:       filterState.builtin,
-      guidestone:    filterState.guidestone,
-      builtinOne:    filterState.builtinOne,
-      crownstoneUSB: filterState.crownstoneUSB,
-      verified:      filterState.verified,
-      unverified:    filterState.unverified,
-      setup:         filterState.setup,
-      dfu:           filterState.dfu,
       filterSelectorOnScreen: false,
-      tracking: null,
+      batchOpsOnScreen: false,
+      trackingHandles: [],
       sorting: true,
       handleFilter: "",
       showHandleFilter: false,
@@ -128,7 +102,6 @@ export class StoneSelector extends LiveComponent<any, any> {
       }))
       this.unsubscribe.push(NativeBus.on(NativeBus.topics.dfuAdvertisement, (data : crownstoneAdvertisement) => {
         this.startHFScanning();
-        console.log("Got DFU packet")
         this.update(data, 'dfu');
       }))
     }
@@ -228,7 +201,7 @@ export class StoneSelector extends LiveComponent<any, any> {
     })
 
     if (newStone) {
-      if (this.state.filterSelectorOnScreen === false) {
+      if (this.state.filterSelectorOnScreen === false && this.state.batchOpsOnScreen === false) {
         this.forceUpdate();
       }
     }
@@ -257,45 +230,42 @@ export class StoneSelector extends LiveComponent<any, any> {
       return;
     }
 
-    let tracker = null;
+    this.trackingItems = [];
 
-    let showAll = this.state.plug && this.state.builtin && this.state.builtinOne && this.state.guidestone && this.state.crownstoneUSB;
+    let showAll = filterState.plug && filterState.builtin && filterState.builtinOne && filterState.guidestone && filterState.crownstoneUSB;
 
-    let collect = (mode) => {
-      if (this.state[mode]) {
-        Object.keys(this.data[mode]).forEach((handle) => {
-
+    let collect = (advertisementType) => {
+      if (filterState[advertisementType]) {
+        Object.keys(this.data[advertisementType]).forEach((handle) => {
           if (!showAll) {
-            let type = this.data[mode] && this.data[mode][handle] && this.data[mode][handle].serviceData && this.data[mode][handle].serviceData.deviceType || null;
+            let deviceType = this.data[advertisementType] && this.data[advertisementType][handle] && this.data[advertisementType][handle].serviceData && this.data[advertisementType][handle].serviceData.deviceType || null;
 
-            if (!this.state[type]) {
+            if (!filterState[deviceType]) {
               return
             }
           }
-
           if (this.state.showHandleFilter && this.state.handleFilter.length > 0) {
             if (handle.toUpperCase().indexOf(this.state.handleFilter) !== 0) {
               return;
             }
           }
 
-          let data = this.data[mode][handle];
+          let data = this.data[advertisementType][handle];
           let rssi = data.rssi;
 
-          if (this.state.tracking === handle) {
-            tracker = { handle: handle, rssi: rssi, type: mode, data: data, sphereId: data.referenceId || null }
+          if (this.state.trackingHandles.indexOf(handle) !== -1) {
+            this.trackingItems.push({ handle: handle, rssi: rssi, type: advertisementType, data: data, sphereId: data.referenceId || null })
             return;
           }
           if (rssi < 0 && rssi >= this.state.rssiFilter || this.state.showHandleFilter) {
-            stack.push({ handle: handle, rssi: rssi, type: mode, data: data, sphereId: data.referenceId || null });
+            stack.push({ handle: handle, rssi: rssi, type: advertisementType, data: data, sphereId: data.referenceId || null });
           }
         })
       }
     }
 
-    console.log(this.data)
-    Object.keys(this.data).forEach((type) => {
-      collect(type);
+    Object.keys(this.data).forEach((advertisementType) => {
+      collect(advertisementType);
     })
 
 
@@ -303,16 +273,28 @@ export class StoneSelector extends LiveComponent<any, any> {
       stack.sort((a, b) => { return b.rssi - a.rssi; });
     }
 
-    if (tracker)
-    stack.unshift(tracker)
+    if (this.trackingItems.length > 0) {
+      this.trackingItems.forEach((data) => {
+        stack.unshift(data);
+      })
+    }
 
     stack.forEach((item) => {
+      let trackingIndex = this.state.trackingHandles.indexOf(item.handle);
       result.push(
         <CrownstoneEntry
           key={item.handle}
           item={item}
-          tracking={item.handle === this.state.tracking}
-          track={() => { this.setState({tracking: this.state.tracking === item.handle ? null : item.handle })}}
+          tracking={trackingIndex !== -1}
+          track={() => {
+            if (trackingIndex !== -1) {
+              let handles = [...this.state.trackingHandles];
+              handles.splice(trackingIndex,1);
+              this.setState({trackingHandles: handles});
+            }
+            else {
+              this.setState({trackingHandles: [item.handle, ...this.state.trackingHandles] })}}
+            }
           callback={() => {
             FocusManager.setHandleToFocusOn(item.handle, item.type, item.data.name);
             if (item.sphereId) {
@@ -375,81 +357,39 @@ export class StoneSelector extends LiveComponent<any, any> {
     );
   }
 
-  render() {
-    updateFilterState(this.state);
-    let noneModeSelected = !(this.state.setup && this.state.verified && this.state.unverified && this.state.dfu);
-    let noneTypeSelected = !(this.state.plug && this.state.builtin && this.state.builtinOne && this.state.guidestone && this.state.crownstoneUSB);
+  getBatchButton() {
+    if (this.state.trackingHandles.length > 1 && this.state.batchOpsOnScreen === false && this.state.filterSelectorOnScreen === false) {
+      return (
+        <TouchableOpacity
+          onPress={() => {
+            this.setState({batchOpsOnScreen: true})
+          }}
+          style={{
+            position: 'absolute',
+            bottom: 20,
+            left: 0.125 * screenWidth,
+            padding: 15,
+            width: 0.75 * screenWidth, ...styles.centered,
+            borderRadius: 30,
+            backgroundColor: colors.menuTextSelected.hex,
+            borderWidth: 4,
+            borderColor: "#fff"
+          }}
+        >
+          <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Perform Batch!</Text>
+        </TouchableOpacity>
+      )
+    }
+  }
 
+  render() {
     return (
       <Background image={core.background.light}>
-        <SlideInView
-          hidden={true}
-          visible={this.state.filterSelectorOnScreen}
-          height={availableScreenHeight}
-          style={{width:screenWidth, height: availableScreenHeight,...styles.centered}}>
-          <View style={{flex:1, maxHeight:30}}/>
-          <Text style={{fontSize:20, fontWeight: 'bold'}}>Select Filters:</Text>
-          <View style={{flex:1}}/>
-          <View style={{flexDirection: 'row', width: screenWidth*0.9}}>
-            <View style={{flex:1,width:0.45*screenWidth, alignItems:'center'}}>
-              <Text style={{fontSize:16, fontWeight: 'bold'}}>Mode:</Text>
-              <BigFilterButton label={"Setup"}       selected={this.state.setup}      callback={() => { this.setState({setup: !this.state.setup})}}/>
-              <BigFilterButton label={"Verified"}    selected={this.state.verified}   callback={() => { this.setState({verified: !this.state.verified})}}/>
-              <BigFilterButton label={"Unverified"}  selected={this.state.unverified} callback={() => { this.setState({unverified: !this.state.unverified}) }}/>
-              <BigFilterButton label={"DFU"}         selected={this.state.dfu}        callback={() => { this.setState({dfu: !this.state.dfu})}}/>
-            </View>
-            <View style={{flex:1,width:0.5*screenWidth, alignItems:'center'}}>
-              <Text style={{fontSize:16, fontWeight: 'bold'}}>Type:</Text>
-              <BigFilterButton label={"Plug"}          selected={this.state.plug}          callback={() => { this.setState({plug: !this.state.plug})}}/>
-              <BigFilterButton label={"Built-in Zero"} selected={this.state.builtin}       callback={() => { this.setState({builtin: !this.state.builtin})}}/>
-              <BigFilterButton label={"Built-in One"}  selected={this.state.builtinOne}    callback={() => { this.setState({builtinOne: !this.state.builtinOne}) }}/>
-              <BigFilterButton label={"Guidestone"}    selected={this.state.guidestone}    callback={() => { this.setState({guidestone: !this.state.guidestone})}}/>
-              <BigFilterButton label={"USB"}           selected={this.state.crownstoneUSB} callback={() => { this.setState({crownstoneUSB: !this.state.crownstoneUSB})}}/>
-            </View>
-          </View>
-
-          <View style={{flexDirection: 'row', width: screenWidth*0.9}}>
-            <View style={{flex:1,width:0.45*screenWidth, alignItems:'center'}}>
-              <BigFilterButton
-                label={noneModeSelected ? "All" : "None"}
-                selected={false}
-                callback={() => {
-                  if (noneModeSelected) {
-                    this.setState({ dfu: true, setup: true, verified: true, unverified: true })
-                  }
-                  else {
-                    this.setState({ dfu: false, setup: false, verified: false, unverified: false })
-                  }
-                }}
-              />
-            </View>
-            <View style={{flex:1,width:0.5*screenWidth, alignItems:'center'}}>
-              <BigFilterButton
-                label={noneTypeSelected ? "All" : "None"}
-                selected={false}
-                callback={() => {
-                  if (noneTypeSelected) {
-                    this.setState(({plug: true, builtin: true, builtinOne: true, guidestone: true, crownstoneUSB: true}))
-                  }
-                  else {
-                    this.setState(({plug: false, builtin: false, builtinOne: false, guidestone: false, crownstoneUSB: false}))
-                  }
-                }}
-              />
-            </View>
-          </View>
-          <View style={{flex:1}}/>
-          <TouchableOpacity
-            onPress={() => { this.setState({filterSelectorOnScreen: false}); this.startScanning() }}
-            style={{padding:15, width: 0.75*screenWidth, ...styles.centered, borderRadius: 30, backgroundColor: colors.green.hex}}
-          >
-            <Text style={{fontSize:20, fontWeight: 'bold'}}>Let's go!</Text>
-          </TouchableOpacity>
-          <View style={{flex:1, maxHeight:30}}/>
-        </SlideInView>
+        <BatchOps close={() => { this.setState({batchOpsOnScreen: false}); this.startScanning() }} visible={this.state.batchOpsOnScreen} selectedStones={this.trackingItems}/>
+        <SelectionFilter submit={() => { this.setState({filterSelectorOnScreen: false}); this.startScanning() }} visible={this.state.filterSelectorOnScreen} update={() => { this.forceUpdate(); }}/>
         <View style={{flexDirection:'row', width:screenWidth, height:60, backgroundColor: colors.white.rgba(0.7), ...styles.centered, borderBottomColor: colors.black.rgba(0.2), borderBottomWidth:1}}>
           <View style={{flex:1, maxWidth:15}}/>
-          <FilterButton label={"Filters"}      selected={false}      callback={() => { this.setState({filterSelectorOnScreen: true})}}/>
+          <FilterButton label={"Filters"}  selected={false}      callback={() => { this.setState({filterSelectorOnScreen: true})}}/>
           <View style={{flex:1}}/>
           <FilterButton label={"HF Scanning"} selected={this.state.HFscanning} callback={() => {
             if (this.state.HFscanning === false) {
@@ -502,122 +442,10 @@ export class StoneSelector extends LiveComponent<any, any> {
             { this.getCrownstones() }
           </View>
         </ScrollView>
+        { this.getBatchButton() }
       </Background>
     );
   }
 }
 
 
-function FilterButton(props) {
-  let unselectedFilter : ViewStyle = { backgroundColor: colors.white.hex, borderColor: colors.csBlue.hex, borderWidth:1, borderRadius: 18, height: 36, ...styles.centered }
-  let selectedFilter : ViewStyle = { ...unselectedFilter,  backgroundColor: colors.menuTextSelected.rgba(0.75),  }
-
-  return (
-    <TouchableOpacity onPress={() => { props.callback() }} style={ props.selected ? selectedFilter : unselectedFilter}>
-      <Text style={{fontSize:13, paddingLeft:10, paddingRight:10, fontWeight:'bold', color: props.selected ? colors.white.hex : colors.black.rgba(0.5) }}>{props.label}</Text>
-    </TouchableOpacity>
-  )
-}
-
-
-function BigFilterButton(props) {
-  let unselectedFilter : ViewStyle = { backgroundColor: colors.white.hex, borderColor: colors.csBlue.hex, borderWidth:1, borderRadius: 20, height: 40, marginVertical:5, width: 0.45*screenWidth-20, ...styles.centered }
-  let selectedFilter : ViewStyle = { ...unselectedFilter,  backgroundColor: colors.menuTextSelected.rgba(0.75),  }
-
-  return (
-    <TouchableOpacity onPress={() => { props.callback() }} style={ props.selected ? selectedFilter : unselectedFilter}>
-      <Text style={{fontSize:14, fontWeight:'bold', color: props.selected ? colors.white.hex : colors.black.rgba(0.5) }}>{props.label}</Text>
-    </TouchableOpacity>
-  )
-}
-
-class CrownstoneEntry extends Component<any, any> {
-
-  cachedCid=null;
-
-  render() {
-    let backgroundColor = colors.white.hex;
-    let opacity = 0.65;
-    let height = 55;
-    if (this.props.tracking) {
-      opacity = 1;
-      height = 75;
-    }
-    let sphere = null
-
-    switch (this.props.item.type) {
-      case 'setup':
-        backgroundColor = colors.menuTextSelected.rgba(opacity);
-        break;
-      case 'verified':
-        backgroundColor = colors.green.rgba(opacity);
-        let state = core.store.getState();
-        sphere = state.spheres[this.props.item.data.referenceId] || null;
-        break;
-      case 'unverified':
-        backgroundColor = colors.white.hex;
-        break;
-      case 'dfu':
-        backgroundColor = colors.purple.rgba(opacity);
-        break;
-    }
-
-    let hasType = this.props.item.data && this.props.item.data.serviceData && this.props.item.data.serviceData.deviceType !== 'undefined' || false;
-    let hasCid = this.props.item.data && this.props.item.data.serviceData && this.props.item.data.serviceData.crownstoneId || false;
-
-    let str = "";
-    if (sphere !== null) {
-      str = " (in " + sphere.config.name;
-    } else {
-      this.cachedCid = null;
-    }
-    if (hasCid !== false && this.props.item.data && this.props.item.data.serviceData.stateOfExternalCrownstone === false) {
-      this.cachedCid = hasCid;
-    }
-    if (this.cachedCid !== null) {
-      str += ":" + this.cachedCid;
-    }
-
-    if (sphere !== null) {
-      str = str + ")";
-    }
-
-
-    return (
-      <View style={{
-        backgroundColor: backgroundColor,
-        width: screenWidth,
-        height: height,
-        padding: 10,
-        borderBottomColor: this.props.tracking ? colors.black.rgba(1) : colors.black.rgba(0.2),
-        borderBottomWidth: this.props.tracking ? 2 : 1,
-        justifyContent: 'center',
-      }}>
-        <View style={{ flex: 1 }}/>
-        <View style={{ flexDirection: 'row', alignItems: 'center', }}>
-          <TouchableOpacity style={{ height: height }} onPress={() => {
-            this.props.callback();
-          }}>
-            <View style={{ flex: 1 }}/>
-            <View style={{ flexDirection: 'row' }}>
-              <Text style={{ width: 60 }}>{this.props.item.data.name}</Text>
-              {!hasType || <Text>{" - "}</Text>}
-              {!hasType || <Text>{this.props.item.data.serviceData.deviceType}</Text>}
-              {sphere !== null ? <Text style={{ fontSize: 13, fontWeight: 'bold' }}>{str}</Text> : undefined}
-              <View style={{ flex: 1 }}/>
-            </View>
-            <View style={{ flex: 1 }}/>
-            <Text style={{ color: colors.black.rgba(0.5), fontSize: 10 }}>{this.props.item.handle}</Text>
-            <View style={{ flex: 1 }}/>
-          </TouchableOpacity>
-          <TouchableOpacity style={{ height: height, flex: 1, justifyContent: 'center' }} onPress={() => {
-            this.props.track()
-          }}>
-            <Text style={{ fontWeight: 'bold', textAlign: 'right' }}>{this.props.item.rssi}</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={{ flex: 1 }}/>
-      </View>
-    );
-  }
-}
