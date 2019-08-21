@@ -14,7 +14,6 @@ import { BluenetPromiseWrapper } from "../../native/libInterface/BluenetPromise"
 
 export class BatchOps extends Component<{selectedStones: any[], visible: boolean, close: () => void}, any>{
 
-
   constructor(props) {
     super(props);
 
@@ -26,8 +25,6 @@ export class BatchOps extends Component<{selectedStones: any[], visible: boolean
       finished: {},
       failed: {},
     };
-
-
   }
 
   getSelectedStones() {
@@ -64,7 +61,6 @@ export class BatchOps extends Component<{selectedStones: any[], visible: boolean
     // perform.
     return promise
       .then((result) => {
-        console.log(result)
         this.setState({
           values:   {...this.state.values, [selectedStone.handle]: result.data},
           pending:  {...this.state.pending, [selectedStone.handle]: false},

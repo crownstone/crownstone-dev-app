@@ -19,6 +19,7 @@ import { BroadcastStateManager } from "../../backgroundProcesses/BroadcastStateM
 import { IconButton } from "../components/IconButton";
 import { ButtonBar } from "../components/editComponents/ButtonBar";
 import { CLOUD } from "../../cloud/cloudAPI";
+import { base_core } from "../../base_core";
 
 
 export class UserDataSpheres extends Component<any, any> {
@@ -72,7 +73,7 @@ export class UserDataSpheres extends Component<any, any> {
             <View style={{height:30, width:screenWidth}} />
             <Text style={{fontSize:30, fontWeight:"bold"}}>{"Logged in as:"}</Text>
             <View style={{height:20, width:screenWidth}} />
-            <Text style={{fontSize:26}}>{core.sessionMemory.loginEmail || state.user.email}</Text>
+            <Text style={{fontSize:26}}>{base_core.sessionMemory.loginEmail || state.user.email}</Text>
             <View style={{height:40, width:screenWidth}} />
             <Text style={{fontSize:14, fontWeight:'bold'}}>{"Which Sphere should be used for setup?"}</Text>
             <View style={{height:10, width:screenWidth}} />

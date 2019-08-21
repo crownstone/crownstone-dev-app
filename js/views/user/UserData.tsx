@@ -7,6 +7,7 @@ import { UserDataSpheres } from "./UserDataSpheres";
 import { BackgroundProcessHandler } from "../../backgroundProcesses/BackgroundProcessHandler";
 import { LiveComponent } from "../LiveComponent";
 import { AppUtil } from "../../util/AppUtil";
+import { base_core } from "../../base_core";
 
 
 export class UserData extends LiveComponent<any, any> {
@@ -16,7 +17,7 @@ export class UserData extends LiveComponent<any, any> {
 
   constructor(props) {
     super(props);
-    this.state = {loggedIn: core.sessionMemory.loginEmail !== null || BackgroundProcessHandler.userLoggedIn};
+    this.state = {loggedIn: base_core.sessionMemory.loginEmail !== null || BackgroundProcessHandler.userLoggedIn};
 
     if (this.state.loggedIn) {
       this.showLogOut()

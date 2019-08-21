@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { core } from "../core";
+import { base_core } from "../base_core";
 const RNFS = require('react-native-fs');
 
 export const FileUtil = {
@@ -19,7 +20,7 @@ export const FileUtil = {
 
   safeMoveFile: function(from,to) {
     // we update the session memory to make sure all pictures are reloaded.
-    core.sessionMemory.cacheBusterUniqueElement = Math.random();
+    base_core.sessionMemory.cacheBusterUniqueElement = Math.random();
     console.log("MOVING FILE", from, to, to.substr(to.length - 20))
     return FileUtil.safeDeleteFile(to)
       .then(() => {

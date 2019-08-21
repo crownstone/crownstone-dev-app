@@ -1,4 +1,10 @@
 
+
+// declare module 'react-native-image-resizer' {
+//   const createResizedImage: any;
+//   export default createResizedImage;
+// }
+
 declare const global: {
   __DEV__: boolean
 };
@@ -88,6 +94,7 @@ interface NativeBusTopics {
   setupProgress:                   string,
   dfuProgress:                     string,
   bleStatus:                       string,
+  bleBroadcastStatus:              string,
   locationStatus:                  string,
 
   nearest:                         string,
@@ -128,6 +135,10 @@ interface core {
   store: any,
   eventBus: any,
   nativeBus: NativeBus,
+}
+
+interface base_core {
+  store: any,
   sessionMemory: {
     loginEmail: string,
     cameraSide: string,
@@ -144,7 +155,7 @@ interface interviewOption {
   nextCard?: string,
   dangerous?: boolean,
   response?: string,
-  dynamicResponse?: (value) => string | string,
+  dynamicResponse?: (value: {textfieldState: string, customElementState: any}) => string | string,
   textAlign?: string,
   onSelect?: (value: interviewReturnData) => boolean | void | string,
   editable?: boolean,
@@ -189,3 +200,8 @@ interface onScreenNotificationPayload {
 }
 
 type StackData = { component: any } | { stack: any } | { bottomTabs: any }
+
+interface GraphData {
+  x: number,
+  y: number,
+}

@@ -38,6 +38,7 @@ import { createNewSphere } from "../../util/CreateSphere";
 import { TopBarUtil } from "../../util/TopBarUtil";
 import { insertInitialState } from "../../backgroundProcesses/InitialState";
 import { SwitchBar } from "../components/editComponents/SwitchBar";
+import { base_core } from "../../base_core";
 
 
 export class UserDataLogin extends Component<any, any> {
@@ -53,7 +54,7 @@ export class UserDataLogin extends Component<any, any> {
 
   constructor(props) {
     super(props);
-    this.state = {email: core.sessionMemory.loginEmail || '', password:'', passwordSecureDisplay: true};
+    this.state = {email: base_core.sessionMemory.loginEmail || '', password:'', passwordSecureDisplay: true};
     this.progress = 0;
   }
 
@@ -81,7 +82,7 @@ export class UserDataLogin extends Component<any, any> {
     core.eventBus.emit('showLoading', 'Requesting new verification email...');
     CLOUD.requestVerificationEmail({email:this.state.email.toLowerCase()})
       .then(() => {
-        core.sessionMemory.loginEmail = this.state.email.toLowerCase();
+        base_core.sessionMemory.loginEmail = this.state.email.toLowerCase();
         core.eventBus.emit('hideLoading');
         Alert.alert(
           lang("_An_email_was_sent_to_____header",this.state.email.toLowerCase()),
@@ -101,7 +102,7 @@ export class UserDataLogin extends Component<any, any> {
     core.eventBus.emit('showLoading', 'Requesting password reset email...');
     CLOUD.requestPasswordResetEmail({email:this.state.email.toLowerCase()})
       .then(() => {
-        core.sessionMemory.loginEmail = this.state.email.toLowerCase();
+        base_core.sessionMemory.loginEmail = this.state.email.toLowerCase();
         core.eventBus.emit('hideLoading');
         Alert.alert(
           lang("_An_email_was_sent_to______header",this.state.email.toLowerCase()),
@@ -479,7 +480,7 @@ export class UserDataLogin extends Component<any, any> {
         setTimeout(() => {
           // state = store.getState();
           core.eventBus.emit('hideProgress');
-          core.sessionMemory.loginEmail = this.state.email;
+          base_core.sessionMemory.loginEmail = this.state.email;
           this.props.loggedIn();
         }, 100);
       })

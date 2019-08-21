@@ -31,6 +31,7 @@ import { StoneAvailabilityTracker } from "../native/advertisements/StoneAvailabi
 import { StoneDataSyncer } from "./StoneDataSyncer";
 import { insertInitialState, setDefaultSessionData } from "./InitialState";
 import { OverlayManager } from "./OverlayManager";
+import { base_core } from "../base_core";
 
 
 class BackgroundProcessHandlerClass {
@@ -51,7 +52,7 @@ class BackgroundProcessHandlerClass {
     Bluenet.rerouteEvents();
 
     BluenetPromiseWrapper.isDevelopmentEnvironment().then((result) => {
-      core.sessionMemory.developmentEnvironment = result;
+      base_core.sessionMemory.developmentEnvironment = result;
     });
 
     // when the user is logged in we track spheres and scan for Crownstones

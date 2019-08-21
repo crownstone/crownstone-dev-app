@@ -9,12 +9,14 @@ import {
   LOG_SCHEDULER,
   RELEASE_MODE_USED, LOG_MESSAGES, LOG_NATIVE,
   LOG_TIME_DIFFS,
-  LOG_TIMESTAMPS, LOG_NOTIFICATIONS, LOG_BCH, LOG_TO_FILE, LOG_DFU, LOG_BROADCAST, LOG_PROMISE_MANAGER
+  LOG_TIMESTAMPS, LOG_NOTIFICATIONS, LOG_BCH, LOG_TO_FILE, LOG_DFU, LOG_BROADCAST, LOG_PROMISE_MANAGER, LOG_NAVIGATION
 } from "../ExternalConfig";
 import { LogProcessor } from "./LogProcessor";
 import { logToFile } from "./LogUtil";
 import { LOG_LEVEL } from "./LogLevels";
 import DeviceInfo from 'react-native-device-info';
+import { base_core } from "../base_core";
+
 let lastLogTime = 0;
 
 class Logger {
@@ -39,17 +41,17 @@ class Logger {
         this.levelPrefix = 'v';
     }
   }
-  
+
   info(...any) {
     this._log('------------', LOG_INFO,      LogProcessor.log_info, arguments);
   }
 
   promiseManager(...any) {
-    this._log('------------', LOG_PROMISE_MANAGER, LogProcessor.log_promiseManager, arguments);
+    this._log('PROMISE MNGR', LOG_PROMISE_MANAGER, LogProcessor.log_promiseManager, arguments);
   }
 
   broadcast(...any) {
-    this._log('------------', LOG_BROADCAST,    LogProcessor.log_broadcast, arguments);
+    this._log('BROADCAST --', LOG_BROADCAST,    LogProcessor.log_broadcast, arguments);
   }
 
   notifications(...any) {
@@ -97,7 +99,11 @@ class Logger {
   }
 
   native(...any) {
-    this._log('Native ---', LOG_NATIVE,  LogProcessor.log_native, arguments);
+    this._log('Native -----', LOG_NATIVE,  LogProcessor.log_native, arguments);
+  }
+
+  nav(...any) {
+    this._log('NAV --------', LOG_NAVIGATION,  LogProcessor.log_nav, arguments);
   }
 
   _log(type, globalCheckField, dbCheckField, allArguments) {
@@ -123,9 +129,16 @@ class Logger {
         logToFile.apply(this, args);
       }
 
-      if (RELEASE_MODE_USED === false) {
-        // @ts-ignore
-        console.log.apply(this, args);
+      if (RELEASE_MODE_USED === false || base_core.sessionMemory.developmentEnvironment) {
+        if (this.level > LOG_LEVEL.info) {
+          // @ts-ignore
+          // console.warn.apply(this, args);
+          console.log.apply(this, args);
+        }
+        else {
+          // @ts-ignore
+          console.log.apply(this, args);
+        }
       }
     }
   }

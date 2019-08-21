@@ -8,6 +8,7 @@ import {EventUtil} from "./EventUtil";
 import { FileUtil } from "./FileUtil";
 import { core } from "../core";
 import { Scheduler } from "../logic/Scheduler";
+import { base_core } from "../base_core";
 
 export const emailChecker = function(email) {
   let reg = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -76,7 +77,7 @@ export const preparePictureURI = function(picture, cacheBuster = true) {
   }
 
   if (cacheBuster) {
-    pictureUri += '?r=' + core.sessionMemory.cacheBusterUniqueElement
+    pictureUri += '?r=' + base_core.sessionMemory.cacheBusterUniqueElement
   }
 
   return pictureUri;
