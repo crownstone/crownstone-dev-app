@@ -1,18 +1,14 @@
 import * as React from 'react'; import { Component } from 'react';
 
-
 import { core } from "../../core";
 import {
   availableScreenHeight,
   colors,
   NORMAL_ROW_SIZE,
-  screenHeight,
   screenWidth,
-  styles,
-  topBarHeight
 } from "../styles";
 import { Background } from "../components/Background";
-import { Alert, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { IconCircle } from "../components/IconCircle";
 import { SwitchBar } from "../components/editComponents/SwitchBar";
 import { BroadcastStateManager } from "../../backgroundProcesses/BroadcastStateManager";

@@ -215,7 +215,7 @@ class FocusManagerClass {
     if (this.crownstoneState.switchState !== data.serviceData.switchState) {
       updateCheck('switchState', data.serviceData.switchState);
       updateCheck('relayState', data.serviceData.switchState >= 128 ? 1 : 0);
-      updateCheck('dimmerState', (data.serviceData.switchState % 128 / 100) * 0.99);
+      updateCheck('dimmerState', data.serviceData.switchState >= 128 ? 0.01* (data.serviceData.switchState - 128) : 0.01*data.serviceData.switchState);
       if (this.updateFreeze.switchState === false) {
         updateRequired = true;
         this.crownstoneState.switchStateValue = this.crownstoneState.relayState === 1 ? 1 : this.crownstoneState.dimmerState;

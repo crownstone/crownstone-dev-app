@@ -18,6 +18,7 @@ import { BlePromiseManager } from "../../logic/BlePromiseManager";
 import { ConnectionManager } from "../../backgroundProcesses/ConnectionManager";
 import { FocusManager } from "../../backgroundProcesses/FocusManager";
 import { BroadcastStateManager } from "../../backgroundProcesses/BroadcastStateManager";
+import { StoneUtil } from "../../util/StoneUtil";
 
 
 const BLE_STATE_READY = "ready";
@@ -60,7 +61,7 @@ export class FirmwareTest extends LiveComponent<{
 
   componentDidMount() {
     this.unsubscribe.push(core.eventBus.on("FOCUS_RSSI_UPDATE", () => {
-      TopBarUtil.updateOptions(this.props.componentId, { title: FocusManager.name + " " + FocusManager.crownstoneState.rssiAverage })
+      TopBarUtil.updateOptions(this.props.componentId, { title: FocusManager.name + " ["+ FocusManager.crownstoneState.stoneId + "] " + FocusManager.crownstoneState.rssiAverage })
     }));
 
     this.unsubscribe.push(core.eventBus.on("FOCUS_UPDATE", () => {
@@ -325,6 +326,22 @@ export class FirmwareTest extends LiveComponent<{
             this.forceUpdate();
           }
         });
+
+        items.push({
+          label: 'Set Dimmer',
+          type: 'numericSet',
+          digits:2,
+          disabled: FocusManager.crownstoneState.dimmerState === null,
+          value: FocusManager.crownstoneState.dimmerState,
+          setCallback: (value) => {
+            let num = Math.max(0, Math.min(1, Number(value)));
+            this.bleAction(BluenetPromiseWrapper.switchDimmer, [num], 'dimmerState', () => {
+              FocusManager.crownstoneState.dimmerState = num;
+              core.eventBus.emit("hideNumericOverlay");
+              this.forceUpdate();
+            })
+          }
+        });
       }
       else {
         items.push({label:"Dimming is disabled.", type: 'info'});
@@ -373,7 +390,7 @@ export class FirmwareTest extends LiveComponent<{
         label: 'Reset Errors',
         type: 'button',
         style: {color:colors.menuTextSelected.hex},
-        callback: (value) => {
+        callback: () => {
           this.bleAction(BluenetPromiseWrapper.clearErrors, [{
             dimmerOnFailure:    true,
             dimmerOffFailure:   true,
@@ -382,6 +399,14 @@ export class FirmwareTest extends LiveComponent<{
             overCurrentDimmer:  true,
             overCurrent:        true,
           }])
+        }
+      });
+      items.push({
+        label: 'Set time',
+        type: 'button',
+        style: {color:colors.menuTextSelected.hex},
+        callback: () => {
+          this.bleAction(BluenetPromiseWrapper.setTime, [StoneUtil.nowToCrownstoneTime()])
         }
       });
     }

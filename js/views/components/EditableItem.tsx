@@ -30,6 +30,7 @@ import { CollapsableBar }    from "./editComponents/Collapsable";
 
 import {styles, colors, NORMAL_ROW_SIZE, EXTRA_LARGE_ROW_SIZE} from '../styles'
 import { ButtonGetValue } from "./editComponents/ButtonGetValue";
+import { NumericSet } from "./editComponents/NumericSet";
 
 
 /**
@@ -146,6 +147,8 @@ export class EditableItem extends Component<any, any> {
         return <TimePicker barHeight={NORMAL_ROW_SIZE} {...this.props} />;
       case 'numericGetSet':
         return <NumericGetSet barHeight={NORMAL_ROW_SIZE} {...this.props} />;
+      case 'numericSet':
+        return <NumericSet barHeight={NORMAL_ROW_SIZE} {...this.props} />;
       default:
         return (
           <View>

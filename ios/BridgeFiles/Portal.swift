@@ -11,7 +11,6 @@ import SwiftyJSON
 
 import BluenetLib
 import BluenetShared
-import BluenetBasicLocalization
 
 
 let GLOBAL_BLUENET = Portal()
@@ -23,7 +22,6 @@ class Portal : NSObject {
   open var bluenetLocalization : BluenetLocalization!
   open var bluenetMotion : BluenetMotion!
   open var trainingHelper : TrainingHelper!
-  open var classifier : CrownstoneBasicClassifier!
   
   open var devEnvironment = false
  
@@ -34,7 +32,6 @@ class Portal : NSObject {
   open func initController(viewController: UIViewController) {
     BluenetLib.setBluenetGlobals(viewController: viewController, appName: "Crownstone")
     BluenetLib.LOG.setTimestampPrinting(newState: true)
-    self.classifier = CrownstoneBasicClassifier()
     
     self.bluenet = Bluenet(backgroundEnabled: true)
     
@@ -42,10 +39,7 @@ class Portal : NSObject {
     // self.bluenetMotion = BluenetMotion()
     
     self.bluenetLocalization = BluenetLocalization(backgroundEnabled: true)
-    
-    // insert the classifier that will be used for room-level localization.
-    self.bluenetLocalization.insertClassifier(classifier: self.classifier)
-    
+  
     self.trainingHelper = TrainingHelper(bluenetLocalization: self.bluenetLocalization)
     
     // store the environment so the app can request it. This is used to determine which notification key we should use in our installation model in the cloud.

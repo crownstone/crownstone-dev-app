@@ -77,7 +77,7 @@ export const preparePictureURI = function(picture, cacheBuster = true) {
   }
 
   if (cacheBuster) {
-    pictureUri += '?r=' + base_core.sessionMemory.cacheBusterUniqueElement
+    pictureUri += '?r=' + base_core.sessionMemory.cacheBusterUniqueElement;
   }
 
   return pictureUri;

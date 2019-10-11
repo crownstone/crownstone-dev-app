@@ -12,7 +12,6 @@ import SwiftyJSON
 
 import BluenetLib
 import BluenetShared
-import BluenetBasicLocalization
 
 
 @objc(BluenetJS)
@@ -41,20 +40,7 @@ open class BluenetJS: RCTEventEmitter {
     
     print("BluenetBridge: ----- BLUENET BRIDGE: Rerouting events")
     
-    _ = GLOBAL_BLUENET.classifier.subscribe("__classifierProbabilities", callback:{ (data) -> Void in
-      //print("__classifierProbabilities",data)
-      if let dict = data as? NSDictionary {
-        self.sendEvent(withName: "classifierProbabilities", body: dict)
-      }
-    })
-    
-    _ = GLOBAL_BLUENET.classifier.subscribe("__classifierResult", callback: { (data) -> Void in
-      //print("__classifierResult",data)
-      if let dict = data as? NSDictionary {
-        self.sendEvent(withName: "classifierResult", body: dict)
-      }
-    })
-    
+   
     
     // forward the event streams to react native
     GLOBAL_BLUENET.bluenetOn("verifiedAdvertisementData", {data -> Void in
@@ -376,7 +362,7 @@ open class BluenetJS: RCTEventEmitter {
     
     let stringifiedFingerprint = GLOBAL_BLUENET.trainingHelper.finishCollectingTrainingData()
     if (stringifiedFingerprint != nil) {
-      GLOBAL_BLUENET.classifier.loadTrainingData(locationId, referenceId: sphereId, trainingData: stringifiedFingerprint!)
+      
       callback([["error" : false, "data": stringifiedFingerprint!]])
     }
     else {
@@ -394,18 +380,17 @@ open class BluenetJS: RCTEventEmitter {
   
   @objc func clearFingerprints() {
     LOGGER.info("BluenetBridge: Called clearFingerprints")
-    GLOBAL_BLUENET.classifier.resetAllTrainingData()
+    
   }
   
   @objc func clearFingerprintsPromise(_ callback: RCTResponseSenderBlock) {
     LOGGER.info("BluenetBridge: Called clearFingerprintsPromise")
-    GLOBAL_BLUENET.classifier.resetAllTrainingData()
     callback([["error" : false]])
   }
   
   @objc func loadFingerprint(_ sphereId: String, locationId: String, fingerprint: String) -> Void {
     LOGGER.info("BluenetBridge: Called loadFingerprint \(sphereId) \(locationId) \(fingerprint)")
-    GLOBAL_BLUENET.classifier.loadTrainingData(locationId, referenceId: sphereId, trainingData: fingerprint)
+
   }
   
   

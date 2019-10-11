@@ -22,6 +22,7 @@ import { BroadcastStateManager } from "../../backgroundProcesses/BroadcastStateM
 import { SelectionFilter } from "./SelectionFilter";
 import { CrownstoneEntry, FilterButton, filterState } from "./SelectionComponents";
 import { BatchOps } from "./BatchOps";
+import { StoneSelectorDataContainer } from "./StoneSelectorData";
 
 let smallText : TextStyle = { fontSize:12, paddingLeft:10, paddingRight:10};
 
@@ -34,15 +35,11 @@ export class StoneSelector extends LiveComponent<any, any> {
   unsubscribe = [];
   refreshTimeout = null;
   doUpdate = false;
-  data : any = {
-    verified: {},
-    unverified: {},
-    setup: {},
-    dfu: {},
-  };
+  
   scanning = false;
   HFTimeout;
   trackingItems = [];
+  lastRedraw = 0
 
 
   constructor(props) {
@@ -64,12 +61,10 @@ export class StoneSelector extends LiveComponent<any, any> {
     switch (buttonId) {
       case 'stop':
         this.stopScanning();
-        TopBarUtil.updateOptions(this.props.componentId,{nav: {id: 'scan', text:'Scan'}});
         break;
       case 'scan':
         this.refresh();
         this.startScanning();
-        TopBarUtil.updateOptions(this.props.componentId,{nav: {id: 'stop', text:'Pause'}});
         break;
       case 'sort':
         this.refresh;
@@ -81,12 +76,16 @@ export class StoneSelector extends LiveComponent<any, any> {
   }
 
   componentDidMount() {
-    this.startScanning();
-    this.refresh();
+    if (StoneSelectorDataContainer.started === false) {
+      StoneSelectorDataContainer.started = true;
+      this.startScanning();
+      this.refresh();
+    }
   }
 
   startScanning() {
     if (this.scanning === false) {
+      TopBarUtil.updateOptions(this.props.componentId,{nav: {id: 'stop', text:'Pause'}});
       this.scanning = true;
       this.refresh();
       this.setRefreshTimeout();
@@ -97,7 +96,6 @@ export class StoneSelector extends LiveComponent<any, any> {
         this.update(data, 'unverified');
       }))
       this.unsubscribe.push(NativeBus.on(NativeBus.topics.setupAdvertisement, (data: crownstoneAdvertisement) => {
-        // console.log("SETUP PACKET", data.handle, data.name, data.rssi)
         this.update(data, 'setup');
       }))
       this.unsubscribe.push(NativeBus.on(NativeBus.topics.dfuAdvertisement, (data : crownstoneAdvertisement) => {
@@ -111,7 +109,9 @@ export class StoneSelector extends LiveComponent<any, any> {
 
 
   startHFScanning(timeoutMs = 0) {
+    console.log("IM IT")
     if (this.state.HFscanning === false) {
+      console.log("XXX")
       this.setState({HFscanning: true});
       Bluenet.startScanningForCrownstones();
       if (timeoutMs != 0) {
@@ -134,6 +134,7 @@ export class StoneSelector extends LiveComponent<any, any> {
   }
 
   stopScanning() {
+    TopBarUtil.updateOptions(this.props.componentId,{nav: {id: 'scan', text:'Scan'}});
     this.stopHFScanning();
     this.scanning = false;
     this.unsubscribe.forEach((unsub) => { unsub(); });
@@ -163,45 +164,50 @@ export class StoneSelector extends LiveComponent<any, any> {
     if (type === "verified" && data.serviceData.setupMode === true) { return; }
 
     let newStone = false;
-    if (this.data[type][data.handle] === undefined) {
+    if (StoneSelectorDataContainer.data[type][data.handle] === undefined) {
       newStone = true;
-      this.data[type][data.handle] = data;
+      StoneSelectorDataContainer.data[type][data.handle] = data;
     }
 
 
-    let previousRssi = this.data[type][data.handle].rssi;
+    let previousRssi = StoneSelectorDataContainer.data[type][data.handle].rssi;
     let newRssi = data.rssi;
 
-    this.data[type][data.handle] = data;
+    StoneSelectorDataContainer.data[type][data.handle] = data;
 
     if (previousRssi >= 0) {
       if (newRssi >= 0) {
-        this.data[type][data.handle].rssi = null;
+        StoneSelectorDataContainer.data[type][data.handle].rssi = null;
       }
       else {
-        this.data[type][data.handle].rssi = newRssi;
+        StoneSelectorDataContainer.data[type][data.handle].rssi = newRssi;
       }
     }
     else {
       if (newRssi >= 0) {
-        this.data[type][data.handle].rssi = previousRssi;
+        StoneSelectorDataContainer.data[type][data.handle].rssi = previousRssi;
       }
       else {
-        this.data[type][data.handle].rssi = Math.round(0.5*newRssi + 0.5*previousRssi);
+        StoneSelectorDataContainer.data[type][data.handle].rssi = Math.round(0.5*newRssi + 0.5*previousRssi);
       }
     }
 
 
-    Object.keys(this.data).forEach((otherType) => {
+    Object.keys(StoneSelectorDataContainer.data).forEach((otherType) => {
       if (otherType === type) { return; }
 
-      if (this.data[otherType][data.handle]) {
-        delete this.data[otherType][data.handle];
+      if (StoneSelectorDataContainer.data[otherType][data.handle]) {
+        delete StoneSelectorDataContainer.data[otherType][data.handle];
       }
     })
 
     if (newStone) {
-      if (this.state.filterSelectorOnScreen === false && this.state.batchOpsOnScreen === false) {
+      let now = new Date().valueOf();
+
+      let minRedrawTime = 1000;
+
+      if (this.state.filterSelectorOnScreen === false && this.state.batchOpsOnScreen === false || now - this.lastRedraw > minRedrawTime) {
+        this.lastRedraw = now;
         this.forceUpdate();
       }
     }
@@ -213,8 +219,9 @@ export class StoneSelector extends LiveComponent<any, any> {
 
   refresh() {
     this.stopHFScanning();
+    this.startScanning();
     this.startHFScanning(500);
-    this.data = {
+    StoneSelectorDataContainer.data = {
       verified: {},
       unverified: {},
       setup: {},
@@ -236,9 +243,9 @@ export class StoneSelector extends LiveComponent<any, any> {
 
     let collect = (advertisementType) => {
       if (filterState[advertisementType]) {
-        Object.keys(this.data[advertisementType]).forEach((handle) => {
+        Object.keys(StoneSelectorDataContainer.data[advertisementType]).forEach((handle) => {
           if (!showAll) {
-            let deviceType = this.data[advertisementType] && this.data[advertisementType][handle] && this.data[advertisementType][handle].serviceData && this.data[advertisementType][handle].serviceData.deviceType || null;
+            let deviceType = StoneSelectorDataContainer.data[advertisementType] && StoneSelectorDataContainer.data[advertisementType][handle] && StoneSelectorDataContainer.data[advertisementType][handle].serviceData && StoneSelectorDataContainer.data[advertisementType][handle].serviceData.deviceType || null;
 
             if (!filterState[deviceType]) {
               return
@@ -250,7 +257,7 @@ export class StoneSelector extends LiveComponent<any, any> {
             }
           }
 
-          let data = this.data[advertisementType][handle];
+          let data = StoneSelectorDataContainer.data[advertisementType][handle];
           let rssi = data.rssi;
 
           if (this.state.trackingHandles.indexOf(handle) !== -1) {
@@ -264,7 +271,7 @@ export class StoneSelector extends LiveComponent<any, any> {
       }
     }
 
-    Object.keys(this.data).forEach((advertisementType) => {
+    Object.keys(StoneSelectorDataContainer.data).forEach((advertisementType) => {
       collect(advertisementType);
     })
 
@@ -383,6 +390,8 @@ export class StoneSelector extends LiveComponent<any, any> {
   }
 
   render() {
+    this.lastRedraw = new Date().valueOf();
+
     return (
       <Background image={core.background.light}>
         <BatchOps close={() => { this.setState({batchOpsOnScreen: false}); this.startScanning() }} visible={this.state.batchOpsOnScreen} selectedStones={this.trackingItems}/>
